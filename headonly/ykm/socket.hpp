@@ -1,10 +1,17 @@
+/*
+socket helper
+last date:  2024/4/30
+version:    dev 0.0.1
+*/
 #ifndef YKM_SOCKET_HPP
 #define YKM_SOCKET_HPP
 
 #ifdef _WIN32
 #include <WinSock2.h>
 #else
+static_assert(true, "the platform not surpoort")
 #include <sys/socket.h>
+#endif
 #endif
 
 #include <string>

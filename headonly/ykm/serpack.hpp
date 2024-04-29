@@ -1,3 +1,9 @@
+/*
+messages/objects packer
+
+last date: 2024/4/30
+version: dev 0.0.1
+*/
 #ifndef YKM_SERPACK_HPP
 #define YKM_SERPACK_HPP
 #include <bit>

@@ -1,10 +1,11 @@
 /*
-    Integrate views across multiple platforms and export a set of usable interfaces.
-    require c++20
+integrate views across multiple platforms and export a set of usable interfaces.
+require c++20
+
+version: dev -1
 */
 #ifndef YKM_VIEWBOX_HPP
-#define YKM_VIEWBOX_HPP 
-
+#define YKM_VIEWBOX_HPP
 
 namespace ykm{
 

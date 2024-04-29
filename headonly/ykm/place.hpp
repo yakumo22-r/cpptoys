@@ -1,3 +1,9 @@
+/*
+object in stack object helper
+
+last date: 2024/4/30
+version:   pub 0.0.1
+*/
 #ifndef YKM_PLACE_HPP
 #define YKM_PLACE_HPP 
 #include <utility>

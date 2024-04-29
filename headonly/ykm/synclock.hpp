@@ -1,5 +1,10 @@
-#ifndef YKM_THREAD_HPP
-#define YKM_THREAD_HPP
+/*
+socket helper
+last date:  2024/4/30
+version:    pub 0.0.1
+*/
+#ifndef YKM_SYNCLOCK_HPP
+#define YKM_SYNCLOCK_HPP
 #include <condition_variable>
 #include <mutex>
 #include <queue>
