@@ -26,6 +26,16 @@ local compile_ser = {
     },
 }
 
+local compile_t0 = {
+    exec = "clang++",
+    sources = {"examples/test.cpp"},
+    args = {
+        "-std=c++20",
+        "-I", "headonly",
+        "-o", "test.exe",
+    },
+}
+
 function conf:build_info(args)
     self.T.cxx_compile_flags(compile_ser)
 end
@@ -33,6 +43,11 @@ end
 function conf:build_ser(args)
     local cmd = self.T.combine_cmds(compile_ser);
     return cmd.." && ".."serpack_test.exe", "toggle"
+end
+
+function conf:build_t0(args)
+    local cmd = self.T.combine_cmds(compile_t0);
+    return cmd.." && ".."test.exe", "toggle"
 end
 
 
