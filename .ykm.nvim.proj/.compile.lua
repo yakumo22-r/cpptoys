@@ -22,6 +22,7 @@ local compile_ser = {
     args = {
         "-std=c++20",
         "-I", "headonly",
+        "-I", "lib",
         "-o", "serpack_test.exe",
     },
 }
@@ -32,6 +33,7 @@ local compile_t0 = {
     args = {
         "-std=c++20",
         "-I", "headonly",
+        "-I", "lib",
         "-o", "test.exe",
     },
 }

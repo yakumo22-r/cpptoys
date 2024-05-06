@@ -2,12 +2,13 @@
     viewbox base interface define
     some functions are implemented by different files on different platforms
 
-    version: dev 0.0.1
+    version: dev 0.0.2
     date : 2024/5/6
 
-todo: text input
+todo: text input and candicate
 */
 #include "event.hpp"
+#include <__iterator/reverse_iterator.h>
 #include <cstdint>
 
 #define YKM_VIEWBOX_I(r) r
@@ -19,15 +20,14 @@ namespace ykm
 
 struct viewbox final
 {
-    inline static constexpr int r_ok = 0;
-    inline static constexpr int r_uninitialized = -1;
-    inline static constexpr int r_internal = -1;
+    inline static constexpr int16_t r_ok = 0;
+    inline static constexpr int16_t r_uninitialized = -1;
+    inline static constexpr int16_t r_internal = -1;
 
-    struct result
-    {
-        viewbox* vb;
-        int code;
-    };
+    using result = int16_t;
+
+    struct implbase;
+    friend implbase;
 
     viewbox() : _ph(nullptr) {}
 
@@ -47,14 +47,14 @@ struct viewbox final
 
     YKM_VIEWBOX_I(std::string) get_internal_errinfo() const;
 
-
     static YKM_VIEWBOX_VOID on_fatal_error(int code, const char* title, const char* what);
     // set get
-    void* get_plat_h() { return _ph; }
+    implbase* get_plat_h() { return _ph; }
     viewbox_xy position() const { return pos; }
     int32_t width() const { return size.x; }
     int32_t height() const { return size.y; }
-    const std::string& title() const { return str_title; };
+
+    const std::string& title() const { return text_title; };
     const viewbox_evt& event() const { return evts; }
 
     ~viewbox()
@@ -64,33 +64,52 @@ struct viewbox final
     }
 
   private:
-// this macro should be defined before include this file
-#ifdef YKM_VIEWBOX_IMPL
-    friend YKM_VIEWBOX_IMPL;
-#endif
-
     viewbox_evt evts;
     viewbox_xy size;
     viewbox_xy pos;
-    std::string str_title;
-    void* _ph;
-};
+    std::string text_title;
+    implbase* _ph;
 
-struct viewbox_errcheck
-{
-    void operator|(YKM_VIEWBOX_RESULT r)
+  public:
+    struct implbase
     {
-        switch (r.code)
+        viewbox_evt& evts() { return vb->evts; }
+        viewbox_xy& size() { return vb->size; }
+        viewbox_xy& pos() { return vb->pos; }
+        std::string& title() { return vb->text_title; }
+        viewbox* vb;
+    };
+
+    struct checker final
+    {
+        void operator|(result code) const
         {
-        case viewbox::r_ok:
-            return;
-        case viewbox::r_uninitialized:
-            r.vb->on_fatal_error(r.code, "call error", "viewbox impl not implementation");
-        default:
-            r.vb->on_fatal_error(r.code, "internal error", r.vb->get_internal_errinfo().c_str());
+            switch (code)
+            {
+            case viewbox::r_ok:
+                return;
+            case viewbox::r_uninitialized:
+                vb->on_fatal_error(code, "call error", "viewbox impl not implementation");
+            default:
+                vb->on_fatal_error(code, "internal error", vb->get_internal_errinfo().c_str());
+            }
         }
-        return;
-    }
+
+        checker(const checker& r) : vb(r.vb){};
+
+        checker operator=(const checker& r)
+        {
+            vb = r.vb;
+            return *this;
+        };
+
+      private:
+        friend viewbox;
+        checker(const viewbox* vb) : vb(vb) {}
+        const viewbox* vb;
+    };
+
+    checker get_checker() const { return checker(this); }
 };
 
 } // namespace ykm
