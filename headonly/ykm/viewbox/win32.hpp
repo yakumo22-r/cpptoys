@@ -3,6 +3,8 @@ windows window Interface encapsulation
 
 version: dev 0.0.1
 date : 2024/5/6
+
+TODO: text input with candicate
 */
 
 #ifndef YKM_VIEWBOX_WIN32_HPP
@@ -339,20 +341,21 @@ inline viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX
     if (ph->hWnd == nullptr)
     {
         ph->GetErrInfo();
-        //MessageBox(0, ph->last_err.c_str(), "ykm viewbox create error", MB_OK);
-        return r_internal;
+        destory();
+        // MessageBox(0, ph->last_err.c_str(), "ykm viewbox create error", MB_OK);
+        return {this, r_internal};
     }
     // SetWindowPos(posX, posY);
-    return r_ok;
+    return {this, r_ok};
 }
 
-inline int viewbox::process_loop()
+inline viewbox::result viewbox::process_loop()
 {
     using namespace ::ykm::viewbox_internal;
     auto ph = YKM_VIEWBOX_WIN32_PH(_ph);
 
     if (!ph)
-        return r_uninitialized;
+        return {this, r_uninitialized};
 
     MSG msg;
 
@@ -361,7 +364,7 @@ inline int viewbox::process_loop()
         if (msg.message == WM_QUIT)
         {
             ph->alive = false;
-            return r_ok;
+            return result{this, r_ok};
         }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -480,68 +483,69 @@ inline int viewbox::process_loop()
         evts.push_evts(viewbox_evt::title);
     }
 
-    return r_ok;
+    return {this, r_ok};
 }
 
-inline int viewbox::show()
+inline YKM_VIEWBOX_RESULT viewbox::show()
 {
     using namespace ::ykm::viewbox_internal;
     auto ph = YKM_VIEWBOX_WIN32_PH(_ph);
     if (!ph)
-        return r_uninitialized;
+        return {nullptr, r_uninitialized};
 
     evts.push_evts(viewbox_evt::awake);
     ::ShowWindow(ph->hWnd, SW_SHOW);
-    return r_ok;
+    return {this, r_ok};
 }
 
-inline int viewbox::set_title(const char* title)
+inline YKM_VIEWBOX_RESULT viewbox::set_title(const char* title)
 {
     using namespace ::ykm::viewbox_internal;
     auto ph = YKM_VIEWBOX_WIN32_PH(_ph);
     if (!ph)
-        return r_uninitialized;
+        return {nullptr, r_uninitialized};
 
     str_title = title;
     ph->dirty_title = true;
-    return r_ok;
+    return {this, r_ok};
 }
-inline int viewbox::set_pos(int x, int y)
+
+inline YKM_VIEWBOX_RESULT viewbox::set_pos(int x, int y)
 {
     using namespace ::ykm::viewbox_internal;
     auto ph = YKM_VIEWBOX_WIN32_PH(_ph);
     if (!ph)
-        return r_uninitialized;
+        return {nullptr, r_uninitialized};
     pos.x = x;
     pos.y = y;
     ph->dirty_pos = true;
-    return r_ok;
+    return {this, r_ok};
 }
-inline int viewbox::set_size(int x, int y)
+inline YKM_VIEWBOX_RESULT viewbox::set_size(int x, int y)
 {
     using namespace ::ykm::viewbox_internal;
     auto ph = YKM_VIEWBOX_WIN32_PH(_ph);
     if (!ph)
-        return r_uninitialized;
+        return {nullptr, r_uninitialized};
     size.x = x;
     size.y = y;
     ph->dirty_size = true;
-    return r_ok;
+    return {this, r_ok};
 }
 
-inline int viewbox::hide()
+inline YKM_VIEWBOX_RESULT viewbox::hide()
 {
     using namespace ::ykm::viewbox_internal;
     auto ph = YKM_VIEWBOX_WIN32_PH(_ph);
     if (!ph)
-        return r_uninitialized;
+        return {nullptr, r_uninitialized};
 
     evts.push_evts(viewbox_evt::sleep);
     ::ShowWindow(ph->hWnd, SW_MINIMIZE);
-    return r_ok;
+    return {this, r_ok};
 }
 
-inline void viewbox::destory()
+inline YKM_VIEWBOX_VOID viewbox::destory()
 {
     using namespace ::ykm::viewbox_internal;
     ::DestroyWindow(YKM_VIEWBOX_WIN32_PH(_ph)->hWnd);
@@ -549,12 +553,14 @@ inline void viewbox::destory()
     _ph = nullptr;
 }
 
-std::string viewbox::get_internal_errinfo() const
+inline YKM_VIEWBOX_I(std::string) viewbox::get_internal_errinfo() const
 {
     using namespace ::ykm::viewbox_internal;
     auto ph = YKM_VIEWBOX_WIN32_PH(_ph);
     return ph ? ph->last_err : "view box impl uninitialized";
 }
+
+inline YKM_VIEWBOX_VOID viewbox::on_fatal_error(int code, const char* title, const char* what) { MessageBox(0, what, title, MB_OK); }
 
 } // namespace ykm
 
