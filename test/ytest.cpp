@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <ykm/test.hpp>
 
 Test(print_format)
@@ -27,13 +25,25 @@ Test(print_format)
     });
 };
 
-Test(T2)
+Test(print_to_file){ytest_ostream_file("print_to_file.log", {
+    logexpr(4 % 4);
+    logexpr(4 % 5);
+    logexpr(4 % 6);
+    logexpr(4 % 7);
+    logexpr(4 % 8);
+})};
+
+Test(print_bytes)
 {
-    assert_bool(false);
-    assert_width(32);
+    int o = 1;
+    ytest_print_bytes_d(&o, sizeof(o), "+1");
+
+    o = -1;
+    ytest_print_bytes_d(&o, sizeof(o), "-1");
 };
 
 TestMain({
     RunTest(print_format);
-    RunTest(T2);
+    RunTest(print_to_file);
+    RunTest(print_bytes);
 })

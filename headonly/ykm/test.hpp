@@ -1,26 +1,64 @@
 #ifndef YKM_TEST_HPP
 #define YKM_TEST_HPP
 
-#include <cstddef>
-#include <vector>
+#include <ostream>
 #if __cplusplus < 202002L
 #error "This code requires C++20 or later."
 #endif
 
+#include <cstddef>
+
 #include <cstdint>
 #include <format>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
+#define ytest_ostream_def ::std::ostream* __ytest_ostream
+#define ytest_ostream_set_console __ytest_ostream = &::std::cout
+
+#define ytest_ostream_def ::std::ostream* __ytest_ostream
+#define ytest_ostream_cpy ::std::ostream* __ytest_ostream = ::__ytest_ostream
+#define ytest_ostream_set_console __ytest_ostream = &::std::cout
+
+#define ytest_ostream_file(name, code)                              \
+    {                                                               \
+        ytest_ostream_set_console;                                  \
+        ::std::ofstream __output(name);                             \
+        if (!__output.is_open())                                    \
+        {                                                           \
+            ytest_println("ytest>> err can't open file: {}", name); \
+            return;                                                 \
+        }                                                           \
+        ytest_println("ytest>> print to file: {}", name);           \
+        ytest_ostream_def = &__output;                              \
+        code;                                                       \
+        __output.close();                                           \
+        ytest_ostream_set_console;                                  \
+        ytest_println("ytest>> file close: {}", name);               \
+    }
+
+#define ytest_ostream_mem(reciver, code)  \
+    {                                     \
+        ::std::ostringstream __oss;       \
+        ytest_ostream_def = &__oss;       \
+        code;                             \
+        reciver = std::move(__oss).str(); \
+    }
+
+#define ytest_ostream (*__ytest_ostream)
+
+extern ytest_ostream_def = &std::cout;
 /*
    format print
 */
-inline static const char ytest_spaces[36] = "*.*.*. . . . . . . . . . . . . . . ";
-#define ytest_indent(i) (&::ytest_spaces[sizeof(ytest_spaces) - 1 - ((i & 0xF) << 1)])
 
-#define ytest_println(...) ::std::cout << ytest_indent(__indent) << ::std::format(__VA_ARGS__) << std::endl
-#define ytest_print(...) ::std::cout << ytest_indent(__indent) << ::std::format(__VA_ARGS__)
+inline static const char ytest_spaces[36] = "*.*.*. . . . . . . . . . . . . . . ";
+#define ytest_indent(i) (&::ytest_spaces[sizeof(ytest_spaces) - 1 - (((i) & 0xF) << 1)])
+
+#define ytest_println(...) ytest_ostream << ytest_indent(__indent) << ::std::format(__VA_ARGS__) << std::endl
+#define ytest_print(...) ytest_ostream << ::std::format(__VA_ARGS__)
 
 #define ytest_indent_add(i, code) \
     {                             \
@@ -28,7 +66,6 @@ inline static const char ytest_spaces[36] = "*.*.*. . . . . . . . . . . . . . . 
         code;                     \
         __indent -= i;            \
     }
-
 
 /*
    core
@@ -54,40 +91,73 @@ struct test_base
 #define RunTest(Name)                \
     Name Name##__ins;                \
     Name##__ins.__indent = __indent; \
-    run_test(Name##__ins, nullptr, argc, argv);
+    ytest_run_test(Name##__ins, nullptr, argc, argv)
 
 #define RunTestMul(Name, postfix)      \
     Name Name##postfix;                \
     Name##postfix.__indent = __indent; \
-    run_test(Name##postfix, #postfix, argc, argv);
+    ytest_run_test(Name##postfix, #postfix, argc, argv)
 
-#define TestMain(e)                 \
-    int main(int argc, char** argv) \
-    {                               \
-        ::std::cout << "\n----welcome!!!----\n" << ::std::endl;\
-        TestBegin(0);               \
-        e;                          \
-        ::std::cout << "----all done----" << ::std::endl;\
-        return 0;                   \
+#define TestMain(e)                                             \
+    int main(int argc, char** argv)                             \
+    {                                                           \
+        ytest_ostream_set_console;                              \
+        ::std::cout << "\n----welcome!!!----\n" << ::std::endl; \
+                                                                \
+        ::ytest_bytesfmt = {4, 4};                              \
+                                                                \
+        TestBegin(0);                                           \
+        e;                                                      \
+        ::std::cout << "----all done----" << ::std::endl;       \
+        return 0;                                               \
     }
 
-#define TEST_RUN_INFO(info, ty, name)              \
+#define TestMainFile(file, code)                                    \
+    int main(int argc, char** argv)                                 \
+    {                                                               \
+        ::std::cout << "\n----welcome!!!----\n" << ::std::endl;     \
+        ytest_ostream_set_console;                                  \
+        ::ofstream __output(name);                                  \
+        if (!__output.is_open())                                    \
+        {                                                           \
+            ytest_println("ytest>> err can't open file: {}", file); \
+            return;                                                 \
+        }                                                           \
+        ytest_println("ytest>> print to file: {}", file);           \
+        ytest_ostream_def = &__output;                              \
+                                                                    \
+        ::ytest_bytesfmt = {4, 4};                                  \
+                                                                    \
+        TestBegin(0);                                               \
+        code;                                                       \
+                                                                    \
+        __output.close();                                           \
+        ytest_ostream_set_console;                                  \
+        ytest_println("ytest>> file close: {}", file);               \
+        ytest_ostream_set_console;                                  \
+        ::std::cout << "----all done----" << ::std::endl;           \
+        return 0;                                                   \
+    }
+
+#define ytest_run_test(test, name, argc, argv)\
+{\
+    int __indent = test.__indent;\
     if (name)                                      \
-        ytest_println("{}_{} {}", ty, name, info); \
+        ytest_println("{}_{} {}", test.get_name(), name, "begin"); \
     else                                           \
-        ytest_println("{} {}", ty, info);
-
-inline void run_test(test_base& test, const char* name, int argc, char** argv)
-{
-    int __indent = test.__indent;
-    TEST_RUN_INFO("begin", test.get_name(), name);
-
-    test.__indent++;
-    test.run(argc, argv);
-
-    TEST_RUN_INFO("end", test.get_name(), name);
-    ::std::cout << ::std::endl;
-}
+        ytest_println("{} {}", test.get_name(), "begin");\
+    ytest_println("~~ <$> ~~");\
+\
+    test.__indent++;\
+    test.run(argc, argv);\
+\
+    ytest_println("~~ <&> ~~");\
+\
+    if (name)                                      \
+        ytest_println("{}_{} {}\n", test.get_name(), name, "end"); \
+    else                                           \
+        ytest_println("{} {}\n", test.get_name(), "end");\
+}\
 
 /*
    feature print extensions
@@ -147,44 +217,59 @@ inline std::string ytest_str_area(size_t size, const char* str)
 
 // clang-format on
 
-
 /*
-   feature print binary
-TODO:
-   [ ] example
+   print binary
 */
-inline std::string ytest_getbytes(void* p, int size, int unit, int column, const char* indent)
-{
-    std::ostringstream oss;
-    unsigned int s_unit = unit > 0 ? unit : 1;
-    unsigned int s_line = column > 0 ? column : 1;
 
-    unsigned int unit_fill, line_fill, offset = 0;
+struct ytest_bytes_fmt
+{
+    unsigned int unit = 4;
+    unsigned int column = 4;
+} __ytest_bytes_fmt;
+
+#define ytest_bytesfmt __ytest_bytes_fmt
+#define ytest_bytesfmt_def(v) ytest_bytes_fmt __ytest_bytes_fmt = v
+#define ytest_bytesfmt_cpy(v) ytest_bytes_fmt __ytest_bytes_fmt = ::ytest_bytes_fmt
+#define ytest_bytesfmt_reset(v) __ytest_bytes_fmt = ::ytest_bytes_fmt
+
+inline void ytest_getbytes(::std::ostream& o, void* p, int size, ytest_bytes_fmt fmt, const char* indent)
+{
+    unsigned int s_unit = fmt.unit > 0 ? fmt.unit : 1;
+    unsigned int s_line = fmt.column > 0 ? fmt.column : 1;
+
+    unsigned int unit_fill=0, line_fill=0, offset = 0;
     unsigned char* buffer = (unsigned char*)p;
     while (offset < size)
     {
-        if (unit_fill == 0 && line_fill == 0)
-            ::std::cout << indent;
+        if (!(unit_fill | line_fill))
+            o << indent;
 
-        ::std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint32_t>(buffer[offset]);
+        o << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint32_t>(buffer[offset]);
         offset++;
         unit_fill++;
         if (unit_fill == s_unit)
         {
-            ::std::cout << " ";
+            o << " ";
             line_fill++;
             if (line_fill == s_line)
             {
-                ::std::cout << std::endl;
+                o << std::endl;
                 line_fill = 0;
             }
             unit_fill = 0;
         }
     }
-    return std::move(oss).str();
 }
 
-#define ytest_bytes(p, size, unit, col) ytest_println("bytes of {} , size: {}\n{}\n", #p, size, ytest_getbytes(p, size, unit, col, ytest_indent(__indent+1))
+#define ytest_print_bytes(p, size)                       \
+    ytest_println("bytes of {} , size: {}", #p, size); \
+    ytest_getbytes(ytest_ostream, p, size, ytest_bytesfmt, ytest_indent(__indent + 1));\
+    ytest_ostream << std::endl
+
+#define ytest_print_bytes_d(p, size, des)            \
+    ytest_println("size: {} des: {} ", size, des); \
+    ytest_getbytes(ytest_ostream, p, size, ytest_bytesfmt, ytest_indent(__indent + 1));\
+    ytest_ostream << std::endl
 
 /*
    feature timer
@@ -245,12 +330,12 @@ struct ytest_timer
 #define ytest_time_continue __test_timer.start()
 #define ytest_time_peek __test_timer.get_info()
 
-
 /*
     features TODO:
     [ ] wait thread quit
     [ ] argv show
-    [ ] option print target | files | console | memory
+    [o] option print target | files | console | memory
+    [ ] colorful output
 */
 
 #endif
