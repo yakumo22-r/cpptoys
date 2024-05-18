@@ -1,5 +1,5 @@
 set_languages("c++20")
-set_toolchains("clang")-- 设置构建缓存路径
+set_toolchains("clang")
 
 target("ytest")
 add_includedirs("./headonly")
