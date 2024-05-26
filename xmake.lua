@@ -1,6 +1,3 @@
-set_languages("c++20")
-set_toolchains("clang")
+includes("test")
+includes("ykm_app")
 
-target("ytest")
-add_includedirs("./headonly")
-add_files("./test/ytest.cpp")

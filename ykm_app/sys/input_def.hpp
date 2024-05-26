@@ -1,31 +1,33 @@
 /*
    user hardware interaction defs
 
-version: dev 0.0.1
-date : 2024/5/6
+version: dev 0.0.2
+date : 2024/5/25
 
 todo: joy controller
 todo: touch pointers
 todo: abstract interaction
 */
-#ifndef YKM_INPUT_DEF_HPP
-#define YKM_INPUT_DEF_HPP
+#ifndef YKM_APP_SYS_INPUT_DEF_HPP
+#define YKM_APP_SYS_INPUT_DEF_HPP
 
-
-#include <array>
 #include <cstdint>
 #include <cstring>
+
+#include <array>
+#include <ykm/enum.h>
+
 namespace ykm::input
 {
 
 enum state : uint8_t
 {
-    ks_up /*        */ = 0x1,
-    ks_release /*   */ = 0x2,
+    ks_release /*   */ = 0x1,
+    ks_up /*        */ = 0x2,
     ks_up_mask /*   */ = ks_release & ks_up,
 
-    ks_press /*     */ = 0x4,
-    ks_down /*      */ = 0x8,
+    ks_down /*      */ = 0x4,
+    ks_press /*     */ = 0x8,
     ks_down_mask /* */ = ks_press & ks_down,
 };
 
@@ -33,95 +35,90 @@ using state_bool = uint8_t;
 
 using code_size = uint8_t;
 
-template <typename Code, size_t Size>
-struct state_machine
+template <typename E, std::size_t S, std::size_t BufSize>
+struct istate
 {
   public:
-    void init(state s) { buffer.fill(state(s & (s << 4))); }
+    state get_state(E i) const { return ks_up << (curr[i] * 2) << prev[i]; }
 
-    state get_state(Code i) const
+    state_bool get_press(E c) const { return get_state(c) & ks_press; }
+    state_bool get_release(E c) const { return get_state(c) & ks_release; }
+
+    state_bool get(E c) const { return get_state(c) & ks_down_mask; }
+
+    state_bool get_down(E c) const { return get_state(c) & ks_down; }
+    state_bool get_up(E c) const { return get_state(c) & ks_up; }
+
+    struct buf_arr;
+    struct buf_itr_t final
     {
-        if (uint32_t(i) % 2 == 0)
-            return state(buffer[uint32_t(i) / 2] >> 4);
-        else
-            return state(buffer[uint32_t(i) / 2] & 0x0f);
+        // clang-format off
+        operator E() { return *e; }
+        buf_itr_t& operator++() { ++e; return *this; }
+        buf_itr_t& operator--() { --e; return *this; }
+
+        bool operator==(buf_itr_t r) const { return r.e == e; }
+        bool operator!=(buf_itr_t r) const { return r.e != e; }
+        E operator*() const { return *e; }
+
+        buf_itr_t(const E* e) : e(e) {}
+
+      private:
+        friend buf_arr;
+        const E* e;
+        // clang-format on
+    };
+
+    struct buf_arr final
+    {
+        buf_arr() : size(0) {}
+        void reset() { size = 0; }
+        void push(E e) { buf[size++] = e; }
+        bool is_full() const { return size == BufSize; }
+        buf_itr_t begin() const { return buf_itr_t(buf.data()); }
+        buf_itr_t end() const { return buf_itr_t(buf.data() + size); }
+
+      private:
+        uint32_t size;
+        std::array<E, BufSize + 1> buf;
+    };
+
+    istate& press(E c)
+    {
+        if (!curr[c])
+        {
+            curr.set(c);
+            buf_p.push(c);
+        }
+        return *this;
     }
-
-    state_bool get_press(Code c) const { return get_state(c) & ks_press; }
-    state_bool get_release(Code c) const { return get_state(c) & ks_release; }
-
-    state_bool get(Code c) const { return get_state(c) & ks_down_mask; }
-
-    state_bool get_down(Code c) const { return get_state(c) & ks_down; }
-    state_bool get_up(Code c) const { return get_state(c) & ks_up; }
-
-    uint8_t count_release() const { return size_r(); }
-    uint8_t count_press() const { return size_p(); }
-
-    Code peek_release(uint8_t i) const { return cache_release[i]; }
-    Code peek_press(uint8_t i) const { return cache_press[i]; }
+    istate& release(E c)
+    {
+        if (curr[c])
+        {
+            curr.reset(c);
+            buf_r.push(c);
+        }
+        return *this;
+    }
 
     void next_frame()
     {
-        for (uint8_t i = 0; i <= size_r(); ++i)
-            set_state(cache_release[i], ks_up);
+        buf_p.reset();
+        buf_r.reset();
+        prev = curr;
+        curr.reset();
+    };
 
-        for (uint8_t i = 0; i <= size_p(); ++i)
-            set_state(cache_press[i], ks_down);
+    const buf_arr& buf_press() const { return buf_p; }
+    const buf_arr& buf_release() const { return buf_r; }
 
-        size_r() = 0;
-        size_p() = 0;
-    }
+  private:
+    ykm::enum_set<E, S> curr;
+    ykm::enum_set<E, S> prev;
 
-    void release(Code c)
-    {
-        if (get_state(c) & ks_up_mask)
-        {
-            set_state(c, ks_up);
-            return;
-        }
-        set_state(c, ks_release);
-        uint8_t index = (size_r()++) - 1;
-        if (index < size)
-            cache_release[index] = c;
-    }
-
-    void press(Code c)
-    {
-        if (get_state(c) & ks_down_mask)
-        {
-            set_state(c, ks_down);
-            return;
-        }
-
-        set_state(c, ks_press);
-
-        uint8_t index = (size_p()++) - 1;
-        if (index < size)
-            cache_press[index] = c;
-    }
-
-  protected:
-    inline static constexpr uint8_t cache_size = Size / 2;
-    inline static constexpr uint8_t size = cache_size - 1;
-
-    std::array<state, cache_size> buffer; // 4bit
-    std::array<Code, cache_size> cache_press;
-    std::array<Code, cache_size> cache_release;
-
-    void set_state(Code c, state s)
-    {
-        if (uint32_t(c) % 2 == 0)
-            buffer[uint32_t(c) / 2] = state((buffer[uint32_t(c) / 2] & 0x0f) & (s << 4));
-        else
-            buffer[uint32_t(c) / 2] = state((buffer[uint32_t(c) / 2] & 0xf0) & s);
-    }
-
-    uint8_t size_r() const { return uint8_t(cache_release[size]); }
-    uint8_t size_p() const { return uint8_t(cache_press[size]); }
-
-    uint8_t& size_r() { return *((uint8_t*)&cache_release[size]); }
-    uint8_t& size_p() { return *((uint8_t*)&cache_press[size]); }
+    buf_arr buf_p;
+    buf_arr buf_r;
 };
 
 struct touch
@@ -155,8 +152,9 @@ enum class btncode : uint8_t
     M14 /*          */ = 14,
     M15 /*          */ = 15,
 };
+const ykm::enum_map<btncode, 16>& btncode_map();
 
-struct mouse : state_machine<btncode, 16>
+struct mouse : istate<btncode, 16, 8>
 {
   public:
     int32_t x() const { return _x; }
@@ -270,12 +268,12 @@ enum class keycode : uint8_t
     F11 /*          */ = 122,
     F12 /*          */ = 123,
 
-    left_shift /*   */ = 160,
-    right_shift /*  */ = 161,
-    left_ctrl /*    */ = 162,
-    right_ctrl /*   */ = 163,
-    left_alt /*     */ = 164,
-    right_alt /*    */ = 165,
+    l_shift /*  */ = 160,
+    r_shift /*  */ = 161,
+    l_ctrl /*   */ = 162,
+    r_ctrl /*   */ = 163,
+    l_alt /*    */ = 164,
+    r_alt /*    */ = 165,
 
     colon /*        */ = 186, // :;
     equal /*        */ = 187, // +=
@@ -290,10 +288,11 @@ enum class keycode : uint8_t
     bracket_right /**/ = 221, // }]
     quotation /*    */ = 222, // "'
 };
+const ykm::enum_map<keycode, 256>& keycode_map();
 
 inline keycode kc_by_win(uint32_t kc) { return keycode(kc); }
 
-using keyboard = state_machine<keycode, 256>;
+using keyboard = istate<keycode, 256, 64>;
 
 // struct joy_controller
 //{

@@ -46,3 +46,44 @@ Test(print_bytes)
     o = -1;
     _print_bytes_d(&o, sizeof(o), "-1");
 };
+
+#include <ykm/enum.h>
+
+enum class EC : unsigned
+{
+    A,
+    B,
+    C,
+};
+struct SE
+{
+    enum E : unsigned
+    {
+        A,
+        B,
+        C,
+    };
+};
+Test(enum_set)
+{
+    ykm::enum_set<EC, 32> ec;
+    ykm::enum_set<SE::E, 32> se;
+    std::bitset<sizeof(EC)> ecs;
+
+    int a = ec[EC::A];
+
+    ec.set(EC::B);
+    _println("A: {} B: {}", ec.test(EC::A), ec.test(EC::B));
+    ec.set(EC::A).reset(EC::B);
+
+    _println("after A: {} B: {}", ec.test(EC::A), ec.test(EC::B));
+
+    ykm::enum_map<EC, 4> map = {{
+        {EC::A, "A"},
+        {EC::B, "B"},
+        {EC::C, "C"},
+    }};
+
+    _logexpr(map.by_code(EC::A));
+    _logexpr(map.by_code(EC::B));
+};

@@ -7,10 +7,10 @@
 
 todo: text input and candicate
 */
-#include "event.hpp"
-#include <__iterator/reverse_iterator.h>
 #include <cstdint>
+#include <string>
 
+#include "event.hpp"
 #define YKM_VIEWBOX_I(r) r
 #define YKM_VIEWBOX_RESULT ::ykm::viewbox::result
 #define YKM_VIEWBOX_VOID void
@@ -20,9 +20,10 @@ namespace ykm
 
 struct viewbox final
 {
+    inline static constexpr int16_t r_quit = 1;
     inline static constexpr int16_t r_ok = 0;
     inline static constexpr int16_t r_uninitialized = -1;
-    inline static constexpr int16_t r_internal = -1;
+    inline static constexpr int16_t r_internal = -2;
 
     using result = int16_t;
 
@@ -42,6 +43,7 @@ struct viewbox final
     YKM_VIEWBOX_RESULT set_title(const char* title);
     YKM_VIEWBOX_RESULT set_pos(int width, int height);
     YKM_VIEWBOX_RESULT set_size(int width, int height);
+    YKM_VIEWBOX_RESULT set_content_size(int width, int height);
 
     YKM_VIEWBOX_RESULT process_loop();
 
@@ -66,6 +68,7 @@ struct viewbox final
   private:
     viewbox_evt evts;
     viewbox_xy size;
+    viewbox_xy content_size;
     viewbox_xy pos;
     std::string text_title;
     implbase* _ph;
@@ -75,6 +78,7 @@ struct viewbox final
     {
         viewbox_evt& evts() { return vb->evts; }
         viewbox_xy& size() { return vb->size; }
+        viewbox_xy& content_size() { return vb->content_size; }
         viewbox_xy& pos() { return vb->pos; }
         std::string& title() { return vb->text_title; }
         viewbox* vb;

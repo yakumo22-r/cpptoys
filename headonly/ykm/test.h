@@ -182,7 +182,7 @@ TODO:
 {\
         auto __content = ::ykm_test::str_area(ytest_logwidth, \
         ::std::format("{} => {}", #expr, expr).c_str()); \
-        _println("{} @{}", __content, _file_line);\
+        _println("{} @{}", ::std::format("{} => {}", #expr, expr), _file_line);\
 }
 
 #define _logwrap(expr) expr; logexpr(expr)
