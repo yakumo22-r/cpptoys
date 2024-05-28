@@ -1,6 +1,7 @@
 #ifndef YKM_TEST_H
 #define YKM_TEST_H
 
+#include <utility>
 #include <vector>
 #if __cplusplus < 202002L
 #error "This code requires C++20 or later."
@@ -10,7 +11,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <format>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -36,7 +36,6 @@ struct base
 
 void do_tests(uint32_t ytest_indent, ::std::vector<::ykm_test::base*> ytestqueue);
 
-std::string str_area(size_t size, const char* str);
 void getbytes(::std::ostream& o, void* p, int size, bytes_fmt fmt, const char* indent);
 
 struct timer
@@ -67,8 +66,26 @@ extern ::std::vector<::ykm_test::base*> ytestqueue;
 
 #define ytest_indent_get(i) &(ytest_indent_str[sizeof(ytest_indent_str) - 1 - (((i) & 0xF) << 1)])
 
-#define _println(...) (*ytest_out) << ytest_indent_get(ytest_indent) << ::std::format(__VA_ARGS__) << ::std::endl
-#define _print(...) (*ytest_out) << ::std::format(__VA_ARGS__)
+#define ytest_endl ::ykm_test::endl
+
+template <typename S, typename T, typename... Args>
+inline void ykm_test_oss(S& s, T&& t, Args&&... args)
+{
+    s << std::forward<T>(t);
+    if constexpr (sizeof...(args) > 0)
+        ykm_test_oss(s, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline std::string ykm_test_str(Args&&... args)
+{
+    std::ostringstream oss;
+    ykm_test_oss(oss, std::forward<Args>(args)...);
+    return std::move(oss).str();
+}
+
+#define _println(...) ykm_test_oss((*ytest_out), ytest_indent_get(ytest_indent), __VA_ARGS__, "\n")
+#define _print(...) ykm_test_oss((*ytest_out), __VA_ARGS__)
 
 #define ytest_indent_add(i, code) \
     {                             \
@@ -82,24 +99,23 @@ extern ::std::vector<::ykm_test::base*> ytestqueue;
 #define _ytest_ytest_global ::ykm_test::ctx
 #define _ostream_set_console ytest_out = &::std::cout
 
-
-#define begin_ostream_file(name)                                 \
-    {                                                            \
-        auto __name = name;                                      \
-        ::std::ofstream __output(name);                          \
-        if (!__output.is_open())                                 \
-        {                                                        \
-            _ostream_set_console;                                \
-            _println("ytest>> err can't open file: {}", __name); \
-            return;                                              \
-        }                                                        \
-        _println("ytest>> print to file: {}", __name);           \
+#define begin_ostream_file(name)                               \
+    {                                                          \
+        auto __name = name;                                    \
+        ::std::ofstream __output(name);                        \
+        if (!__output.is_open())                               \
+        {                                                      \
+            _ostream_set_console;                              \
+            _println("ytest>> err can't open file: ", __name); \
+            return;                                            \
+        }                                                      \
+        _println("ytest>> print to file: ", __name);           \
         ytest_out = &__output;
 
-#define end_ostream_file()                      \
-    __output.close();                           \
-    _ostream_set_console;                       \
-    _println("ytest>> file close: {}", __name); \
+#define end_ostream_file()                    \
+    __output.close();                         \
+    _ostream_set_console;                     \
+    _println("ytest>> file close: ", __name); \
     }
 
 #define _ostream_mem(reciver, code)       \
@@ -131,13 +147,13 @@ extern ::std::vector<::ykm_test::base*> ytestqueue;
     } Name##_ins;                                                      \
     inline void Name::run(int argc, char** argv)
 
-#define _print_argvs                          \
-    _println("argv num: {} \n<$>", argc);     \
-    for (int i = 0; i <= argc; i++)           \
-    {                                         \
-        _println("{:<4} ~> {}}", i, argv[i]); \
-    }                                         \
-    _println("<end>\n", i, argv[i]);
+#define _print_argvs                                     \
+    _println("argv num: ", argc, " \n<$>");              \
+    for (int i = 0; i <= argc; i++)                      \
+    {                                                    \
+        _println(std::setw(4), i, " ~> {", argv[i], "}"); \
+    }                                                    \
+    _println("<end>\n");
 
 /*
    feature print extensions
@@ -150,39 +166,39 @@ TODO:
 #define _logwidth_reset _logwidth_set(::ytest_logwidth)
 #define _logwidth_copy(i) uint32_t _logwidth_reset
 
-#define _file_line ::std::format("{}:{}", __FILE__, __LINE__)
+#define _file_line __FILE__, ":",std::dec, __LINE__
 
 // clang-format off
 
 #define _assert_bool(Con) if (!Con) \
     { \
-        auto __content = ::ykm_test::str_area(ytest_logwidth, \
-        ::std::format("assert_bool failed -> {}", #Con).c_str()); \
-        _println("{} @{}", __content, _file_line); \
+        _println(std::setw(ytest_logwidth), \
+        ykm_test_str("assert_bool failed -> ", #Con),\
+        " @", _file_line);                            \
         return; \
     } \
 
 #define _assert_equal(A, B) if (A != B) \
     { \
-        auto __content = ::ykm_test::str_area(ytest_logwidth, \
-        ::std::format("assert_equal  failed: {} != {}   @line {}", #A, #B).c_str()); \
-        _println("{} @{}", __content, _file_line); \
+        _println(std::setw(ytest_logwidth), \
+        ykm_test_str("assert_equal  failed: ", #A, " != ", #B),\
+        " @", _file_line); \
         return; \
     } \
 
 #define _assert_not_equal(A, B) if (A == B) \
     { \
-        auto __content = ::ykm_test::str_area(ytest_logwidth, \
-        ::std::format("assert_not_equal failed: {} != {}   @line {}", #A, #B).c_str()); \
-        _println("{} @{}", __content, _file_line); \
+        _println(std::setw(ytest_logwidth), \
+        ykm_test_str("assert_not_equal failed: ", #A, " == ", #B),\
+        " @", _file_line); \
         return; \
     } \
 
 #define _logexpr(expr) \
 {\
-        auto __content = ::ykm_test::str_area(ytest_logwidth, \
-        ::std::format("{} => {}", #expr, expr).c_str()); \
-        _println("{} @{}", ::std::format("{} => {}", #expr, expr), _file_line);\
+        _println(std::setw(ytest_logwidth), \
+        ykm_test_str(#expr, " => ", expr),\
+        " @", _file_line); \
 }
 
 #define _logwrap(expr) expr; logexpr(expr)
@@ -199,12 +215,12 @@ TODO:
 #define _bytesfmt_reset(v) ytest_bfmt = ::ytest_bfmt
 
 #define _print_bytes(p, size)                                                                  \
-    _println("bytes of {} , size: {}", #p, size);                                              \
+    _println("bytes of ", #p, " size: ", size);                                                \
     ::ykm_test::getbytes(*ytest_out, p, size, ytest_bfmt, ytest_indent_get(ytest_indent + 1)); \
     *ytest_out << ::std::endl
 
 #define _print_bytes_d(p, size, des)                                                           \
-    _println("size: {} des: {} ", size, des);                                                  \
+    _println("size: ", size, " des: ", des);                                                   \
     ::ykm_test::getbytes(*ytest_out, p, size, ytest_bfmt, ytest_indent_get(ytest_indent + 1)); \
     *ytest_out << ::std::endl
 

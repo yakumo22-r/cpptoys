@@ -1,11 +1,12 @@
-#include "test.h"
+#include "ykm_test.h"
+#include <iomanip>
 
 namespace ykm_test
 {
 
 ::std::vector<::ykm_test::base*> ytestqueue;
 
-inline base::base(const char* n, test_func f) : test_name(n), test_f(f) { ytestqueue.push_back(this); }
+base::base(const char* n, test_func f) : test_name(n), test_f(f) { ytestqueue.push_back(this); }
 
 void getbytes(::std::ostream& o, void* p, int size, bytes_fmt fmt, const char* indent)
 {
@@ -41,40 +42,34 @@ std::string timer::get_info()
     using namespace std::chrono;
     auto nano = duration_cast<nanoseconds>(stored).count();
     if (nano < 100)
-        return std::format("{}nano", nano);
+        return ykm_test_str(nano, "nano");
 
     auto micro = duration_cast<microseconds>(stored).count();
     if (micro < 100)
-        return std::format("{}micro", micro);
+        return ykm_test_str(micro, "micro");
 
     auto ms = duration_cast<milliseconds>(stored).count();
     if (ms < 10000)
-        return std::format("{}ms", ms);
+        return ykm_test_str(ms, "ms");
 
     uint32_t s = ms % 1000;
     if (s < 60)
-        return std::format("{} s", s);
+        return ykm_test_str(s, "s");
 
     uint32_t M = s % 60;
     if (M < 60)
-        return std::format("{}M {}s {}ms", M, s % 60, ms % 1000);
+        return ykm_test_str(M, "M ", s % 60, "s ", ms % 1000, "ms");
 
     uint32_t H = M % 60;
-    return std::format("{}H {}M {}s {}ms", H, M % 60, s % 60, ms % 1000);
-}
 
-std::string str_area(size_t size, const char* str)
-{
-    std::string o(str);
-    o.resize(size, ' ');
-    return o;
+    return ykm_test_str(H, "H ", M % 60, "M ", s % 60, "s ", ms % 1000, "ms");
 }
 
 void do_tests(uint32_t ytest_indent, ::std::vector<::ykm_test::base*> ytestqueue, int argc, char** argv)
 {
     for (auto p : ytestqueue)
     {
-        _println("{} {}", p->test_name, "begin");
+        _println(p->test_name, " begin");
 
         _println("~~ <$>");
 
@@ -83,7 +78,7 @@ void do_tests(uint32_t ytest_indent, ::std::vector<::ykm_test::base*> ytestqueue
 
         _println("~~ <&>");
 
-        _println("{} {}\n", p->test_name, "end");
+        _println(p->test_name, " end\n");
     }
 }
 

@@ -10,6 +10,7 @@ target("test_lua")
 
 target("ytest")
     add_includedirs("../headonly")
+    add_deps("ykm_test")
     set_targetdir("$(projectdir)/xmake-build")
     add_files("./ytest.cpp")
 

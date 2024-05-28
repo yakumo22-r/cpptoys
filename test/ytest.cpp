@@ -1,4 +1,4 @@
-#include <ykm/test_src.hpp>
+#include "ykm_test.h"
 
 Test(print_format)
 {
