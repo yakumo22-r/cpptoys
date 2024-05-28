@@ -90,9 +90,14 @@ struct enum_map
 
   private:
     const char* null_cstr;
-    std::array<char*, Size> v_str;
+    std::array<const char*, Size> v_str;
     std::unordered_map<std::string_view, E> str_v;
 };
+
+#define YKM_ENUM_E__(e) e,
+#define YKM_ENUM_EN_(e, n) e,
+#define YKM_ENUM_EI_(e, i) e = i,
+#define YKM_ENUM_ENI(e, n, i) e = i,
 
 } // namespace ykm
 

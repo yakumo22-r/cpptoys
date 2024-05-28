@@ -19,7 +19,7 @@ int main()
         {
             for (auto kc : vb.event().keyboard.buf_press())
             {
-                std::cout << std::format("press {} {}", ykm::input::keycode_map()[kc], size_t(kc)) << std::endl;
+                std::cout << std::format("press {} {}", ykm::input::keycode_map[kc], size_t(kc)) << std::endl;
             }
             code = vb.process_loop();
         }

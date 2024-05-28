@@ -15,7 +15,7 @@ todo: abstract interaction
 #include <cstring>
 
 #include <array>
-#include <ykm/enum.h>
+#include <ykm/enum.hpp>
 
 namespace ykm::input
 {
@@ -129,30 +129,36 @@ struct touch
     state s;
 };
 
+// clang-format off
+#define YKM_APP_SYS_BTNCODE_ELEM\
+    YKM_ENUM_EI_(invalid    , 0  )\
+    YKM_ENUM_EI_(left       , 1  )\
+    YKM_ENUM_EI_(right      , 2  )\
+    YKM_ENUM_EI_(middle     , 3  )\
+    YKM_ENUM_EI_(mouse1     , 1  )\
+    YKM_ENUM_EI_(mouse2     , 2  )\
+    YKM_ENUM_EI_(mouse3     , 3  )\
+    YKM_ENUM_EI_(mouse4     , 4  )\
+    YKM_ENUM_EI_(mouse5     , 5  )\
+    YKM_ENUM_EI_(mouse6     , 6  )\
+    YKM_ENUM_EI_(mouse7     , 7  )\
+    YKM_ENUM_EI_(mouse8     , 8  )\
+    YKM_ENUM_EI_(mouse9     , 9  )\
+    YKM_ENUM_EI_(mouse10    , 10 )\
+    YKM_ENUM_EI_(mouse11    , 11 )\
+    YKM_ENUM_EI_(mouse12    , 12 )\
+    YKM_ENUM_EI_(mouse13    , 13 )\
+    YKM_ENUM_EI_(mouse14    , 14 )\
+    YKM_ENUM_EI_(mouse15    , 15 )
+
+// clang-format on
+
 enum class btncode : uint8_t
 {
-    invalid /*      */ = 0,
-    left /*         */ = 1,
-    right /*        */ = 2,
-    middle /*       */ = 3,
-    M1 /*           */ = 1,
-    M2 /*           */ = 2,
-    M3 /*           */ = 3,
-
-    M4 /*           */ = 4,
-    M5 /*           */ = 5,
-    M6 /*           */ = 6,
-    M7 /*           */ = 7,
-    M8 /*           */ = 8,
-    M9 /*           */ = 9,
-    M10 /*          */ = 10,
-    M11 /*          */ = 11,
-    M12 /*          */ = 12,
-    M13 /*          */ = 13,
-    M14 /*          */ = 14,
-    M15 /*          */ = 15,
+    YKM_APP_SYS_BTNCODE_ELEM
 };
-const ykm::enum_map<btncode, 16>& btncode_map();
+
+extern const ykm::enum_map<btncode, 16> btncode_map;
 
 struct mouse : istate<btncode, 16, 8>
 {
@@ -172,123 +178,130 @@ struct mouse : istate<btncode, 16, 8>
     int32_t _y;
 };
 
+// clang-format off
+#define YKM_APP_SYS_KEYCODE_ELEM \
+YKM_ENUM_EI_(invalid                        , 0   )\
+\
+YKM_ENUM_EI_(backspace                      , 8   )\
+YKM_ENUM_EI_(tab                            , 9   )\
+\
+YKM_ENUM_EI_(enter                          , 13  )\
+YKM_ENUM_EI_(shift                          , 16  )\
+YKM_ENUM_EI_(ctrl                           , 17  )\
+YKM_ENUM_EI_(alt                            , 18  )\
+YKM_ENUM_EI_(pausebreak                     , 19  )\
+YKM_ENUM_EI_(capslock                       , 20  )\
+\
+YKM_ENUM_EI_(esc                            , 27  )\
+\
+YKM_ENUM_EI_(space                          , 32  )\
+YKM_ENUM_EI_(pageup                         , 33  )\
+YKM_ENUM_EI_(pagedown                       , 34  )\
+YKM_ENUM_EI_(end                            , 35  )\
+YKM_ENUM_EI_(home                           , 36  )\
+YKM_ENUM_EI_(left                           , 37  )\
+YKM_ENUM_EI_(up                             , 38  )\
+YKM_ENUM_EI_(right                          , 39  )\
+YKM_ENUM_EI_(down                           , 40  )\
+\
+YKM_ENUM_EI_(insert                         , 45  )\
+YKM_ENUM_EI_(del                            , 46  )\
+\
+YKM_ENUM_ENI(_0         , "0"               , 48  )\
+YKM_ENUM_ENI(_1         , "1"               , 49  )\
+YKM_ENUM_ENI(_2         , "2"               , 50  )\
+YKM_ENUM_ENI(_3         , "3"               , 51  )\
+YKM_ENUM_ENI(_4         , "4"               , 52  )\
+YKM_ENUM_ENI(_5         , "5"               , 53  )\
+YKM_ENUM_ENI(_6         , "6"               , 54  )\
+YKM_ENUM_ENI(_7         , "7"               , 55  )\
+YKM_ENUM_ENI(_8         , "8"               , 56  )\
+YKM_ENUM_ENI(_9         , "9"               , 57  )\
+\
+/* A-Z keycode.*/ \
+YKM_ENUM_EI_(A                              , 65  )\
+YKM_ENUM_EI_(B                              , 66  )\
+YKM_ENUM_EI_(C                              , 67  )\
+YKM_ENUM_EI_(D                              , 68  )\
+YKM_ENUM_EI_(E                              , 69  )\
+YKM_ENUM_EI_(H                              , 72  )\
+YKM_ENUM_EI_(I                              , 73  )\
+YKM_ENUM_EI_(J                              , 74  )\
+YKM_ENUM_EI_(K                              , 75  )\
+YKM_ENUM_EI_(L                              , 76  )\
+YKM_ENUM_EI_(M                              , 77  )\
+YKM_ENUM_EI_(N                              , 78  )\
+YKM_ENUM_EI_(O                              , 79  )\
+YKM_ENUM_EI_(P                              , 80  )\
+YKM_ENUM_EI_(Q                              , 81  )\
+YKM_ENUM_EI_(R                              , 82  )\
+YKM_ENUM_EI_(S                              , 83  )\
+YKM_ENUM_EI_(T                              , 84  )\
+YKM_ENUM_EI_(U                              , 85  )\
+YKM_ENUM_EI_(V                              , 86  )\
+YKM_ENUM_EI_(W                              , 87  )\
+YKM_ENUM_EI_(X                              , 88  )\
+YKM_ENUM_EI_(Y                              , 89  )\
+YKM_ENUM_EI_(Z                              , 90  )\
+YKM_ENUM_EI_(super                          , 91  )/* win in windows, command in mac */\
+\
+YKM_ENUM_ENI(np_0       , "numpad(0)"       , 96  )\
+YKM_ENUM_ENI(np_1       , "numpad(1)"       , 97  )\
+YKM_ENUM_ENI(np_2       , "numpad(2)"       , 98  )\
+YKM_ENUM_ENI(np_3       , "numpad(3)"       , 99  )\
+YKM_ENUM_ENI(np_4       , "numpad(4)"       , 100 )\
+YKM_ENUM_ENI(np_5       , "numpad(5)"       , 101 )\
+YKM_ENUM_ENI(np_6       , "numpad(6)"       , 102 )\
+YKM_ENUM_ENI(np_7       , "numpad(7)"       , 103 )\
+YKM_ENUM_ENI(np_8       , "numpad(8)"       , 104 )\
+YKM_ENUM_ENI(np_9       , "numpad(9)"       , 105 )\
+YKM_ENUM_ENI(np_mul     , "numpad(*)"       , 106 )\
+YKM_ENUM_ENI(np_plus    , "numpad(+)"       , 107 )\
+YKM_ENUM_ENI(np_enter   , "numpad(enter)"   , 108 )\
+YKM_ENUM_ENI(np_minus   , "numpad(-)"       , 109 )\
+YKM_ENUM_ENI(np_dot     , "numpad(.)"       , 110 )\
+YKM_ENUM_ENI(np_divide  , "numpad(/)"       , 111 )\
+\
+YKM_ENUM_EI_(F1                             , 112 )\
+YKM_ENUM_EI_(F2                             , 113 )\
+YKM_ENUM_EI_(F3                             , 114 )\
+YKM_ENUM_EI_(F4                             , 115 )\
+YKM_ENUM_EI_(F5                             , 116 )\
+YKM_ENUM_EI_(F6                             , 117 )\
+YKM_ENUM_EI_(F7                             , 118 )\
+YKM_ENUM_EI_(F8                             , 119 )\
+YKM_ENUM_EI_(F9                             , 120 )\
+YKM_ENUM_EI_(F10                            , 121 )\
+YKM_ENUM_EI_(F11                            , 122 )\
+YKM_ENUM_EI_(F12                            , 123 )\
+\
+YKM_ENUM_ENI(l_shift     , "l-shift"        , 160 )\
+YKM_ENUM_ENI(r_shift     , "r-shift"        , 161 )\
+YKM_ENUM_ENI(l_ctrl      , "l-ctrl"         , 162 )\
+YKM_ENUM_ENI(r_ctrl      , "r-ctrl"         , 163 )\
+YKM_ENUM_ENI(l_alt       , "l-alt"          , 164 )\
+YKM_ENUM_ENI(r_alt       , "r-alt"          , 165 )\
+\
+YKM_ENUM_ENI(colon       , "(:)"            , 186 )\
+YKM_ENUM_ENI(equal       , "(=)"            , 187 )\
+YKM_ENUM_ENI(comma       , "(,)"            , 188 )\
+YKM_ENUM_ENI(minus       , "(-)"            , 189 )\
+YKM_ENUM_ENI(period      , "(.)"            , 190 )\
+YKM_ENUM_ENI(slash       , "(/)"            , 191 )\
+YKM_ENUM_ENI(tilde       , "(~)"            , 192 )\
+\
+YKM_ENUM_ENI(bracket_left   ,"([)"          , 219 )\
+YKM_ENUM_ENI(backslash      ,"(\\)"         , 220 )\
+YKM_ENUM_ENI(bracket_right  ,"(])"          , 221 )\
+YKM_ENUM_ENI(quotation      ,"(')"          , 222 )
+
+// clang-format on
 enum class keycode : uint8_t
 {
-    invalid /*      */ = 0,
-
-    backspace /*    */ = 8,
-    tab /*          */ = 9,
-
-    enter /*        */ = 13,
-    shift /*        */ = 16,
-    ctrl /*         */ = 17,
-    alt /*          */ = 18,
-    pausebreak /*   */ = 19,
-    capslock /*     */ = 20,
-
-    esc /*          */ = 27,
-
-    space /*        */ = 32,
-    pageup /*       */ = 33,
-    pagedown /*     */ = 34,
-    end /*          */ = 35,
-    home /*         */ = 36,
-    left /*         */ = 37,
-    up /*           */ = 38,
-    right /*        */ = 39,
-    down /*         */ = 40,
-
-    insert /*       */ = 45,
-    del /*          */ = 46,
-
-    _0 /*           */ = 48,
-    _1 /*           */ = 49,
-    _2 /*           */ = 50,
-    _3 /*           */ = 51,
-    _4 /*           */ = 52,
-    _5 /*           */ = 53,
-    _6 /*           */ = 54,
-    _7 /*           */ = 55,
-    _8 /*           */ = 56,
-    _9 /*           */ = 57,
-
-    // A-Z keycode.
-    A /*            */ = 65,
-    B /*            */ = 66,
-    C /*            */ = 67,
-    D /*            */ = 68,
-    E /*            */ = 69,
-    H /*            */ = 72,
-    I /*            */ = 73,
-    J /*            */ = 74,
-    K /*            */ = 75,
-    L /*            */ = 76,
-    M /*            */ = 77,
-    N /*            */ = 78,
-    O /*            */ = 79,
-    P /*            */ = 80,
-    Q /*            */ = 81,
-    R /*            */ = 82,
-    S /*            */ = 83,
-    T /*            */ = 84,
-    U /*            */ = 85,
-    V /*            */ = 86,
-    W /*            */ = 87,
-    X /*            */ = 88,
-    Y /*            */ = 89,
-    Z /*            */ = 90,
-    super /*        */ = 91, // win in windows, command in mac
-
-    np_0 /*         */ = 96,
-    np_1 /*         */ = 97,
-    np_2 /*         */ = 98,
-    np_3 /*         */ = 99,
-    np_4 /*         */ = 100,
-    np_5 /*         */ = 101,
-    np_6 /*         */ = 102,
-    np_7 /*         */ = 103,
-    np_8 /*         */ = 104,
-    np_9 /*         */ = 105,
-    np_mul /*       */ = 106, // * key
-    np_plus /*      */ = 107, // + key
-    np_enter /*     */ = 108,
-    np_minus /*     */ = 109, // - key
-    np_dot /*       */ = 110, // . key
-    np_divide /*    */ = 111, // / key
-    F1 /*           */ = 112,
-    F2 /*           */ = 113,
-    F3 /*           */ = 114,
-    F4 /*           */ = 115,
-    F5 /*           */ = 116,
-    F6 /*           */ = 117,
-    F7 /*           */ = 118,
-    F8 /*           */ = 119,
-    F9 /*           */ = 120,
-    F10 /*          */ = 121,
-    F11 /*          */ = 122,
-    F12 /*          */ = 123,
-
-    l_shift /*  */ = 160,
-    r_shift /*  */ = 161,
-    l_ctrl /*   */ = 162,
-    r_ctrl /*   */ = 163,
-    l_alt /*    */ = 164,
-    r_alt /*    */ = 165,
-
-    colon /*        */ = 186, // :;
-    equal /*        */ = 187, // +=
-    comma /*        */ = 188, // <,
-    minus /*        */ = 189, // _-
-    period /*       */ = 190, // >.
-    slash /*        */ = 191, // ?/
-    tilde /*        */ = 192, // ~
-
-    bracket_left /* */ = 219, // {[
-    backslash /*    */ = 220, /* |\ */
-    bracket_right /**/ = 221, // }]
-    quotation /*    */ = 222, // "'
+    YKM_APP_SYS_KEYCODE_ELEM
 };
-const ykm::enum_map<keycode, 256>& keycode_map();
+
+extern const ykm::enum_map<keycode, 256> keycode_map;
 
 inline keycode kc_by_win(uint32_t kc) { return keycode(kc); }
 

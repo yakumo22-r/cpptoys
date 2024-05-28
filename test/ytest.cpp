@@ -47,28 +47,25 @@ Test(print_bytes)
     _print_bytes_d(&o, sizeof(o), "-1");
 };
 
-#include <ykm/enum.h>
+#include <ykm/enum.hpp>
 
 enum class EC : unsigned
 {
-    A,
-    B,
-    C,
+// clang-format off
+#define ENUM_ELEMENT_EC    \
+    YKM_ENUM_E__(A)        \
+    YKM_ENUM_E__(C)        \
+    YKM_ENUM_EN_(B, "{B}")
+// clang-format on
+
+    ENUM_ELEMENT_EC
 };
-struct SE
-{
-    enum E : unsigned
-    {
-        A,
-        B,
-        C,
-    };
-};
+
+extern ykm::enum_map<EC, 4> EC_Map;
+
 Test(enum_set)
 {
     ykm::enum_set<EC, 32> ec;
-    ykm::enum_set<SE::E, 32> se;
-    std::bitset<sizeof(EC)> ecs;
 
     int a = ec[EC::A];
 
@@ -78,12 +75,13 @@ Test(enum_set)
 
     _println("after A: {} B: {}", ec.test(EC::A), ec.test(EC::B));
 
-    ykm::enum_map<EC, 4> map = {{
-        {EC::A, "A"},
-        {EC::B, "B"},
-        {EC::C, "C"},
-    }};
-
-    _logexpr(map.by_code(EC::A));
-    _logexpr(map.by_code(EC::B));
+    _logexpr(EC_Map.by_code(EC::A));
+    _logexpr(EC_Map.by_code(EC::B));
 };
+
+#include <ykm/enum_map_macro.h>
+
+#undef YKM_ENUM_MAP_NS
+#define YKM_ENUM_MAP_NS ::EC
+
+ykm::enum_map<EC, 4> EC_Map = {ENUM_ELEMENT_EC};
