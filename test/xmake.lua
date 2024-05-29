@@ -7,6 +7,9 @@ target("test_lua")
     add_files("test_lua.cpp")
     set_targetdir("$(projectdir)/xmake-build")
     add_packages("luajit")
+    if is_plat("macosx") then
+        add_ldflags("-pagezero_size 10000", "-image_base 100000000")
+    end
 
 target("ytest")
     add_includedirs("../headonly")
