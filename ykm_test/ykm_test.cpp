@@ -42,34 +42,34 @@ std::string timer::get_info()
     using namespace std::chrono;
     auto nano = duration_cast<nanoseconds>(stored).count();
     if (nano < 100)
-        return ykm_test_str(nano, "nano");
+        return fmt::format("{}nano", nano);
 
     auto micro = duration_cast<microseconds>(stored).count();
     if (micro < 100)
-        return ykm_test_str(micro, "micro");
+        return fmt::format("{}micro", micro);
 
     auto ms = duration_cast<milliseconds>(stored).count();
     if (ms < 10000)
-        return ykm_test_str(ms, "ms");
+        return fmt::format("{}ms", ms);
 
     uint32_t s = ms % 1000;
     if (s < 60)
-        return ykm_test_str(s, "s");
+        return fmt::format("{}s", s);
 
     uint32_t M = s % 60;
     if (M < 60)
-        return ykm_test_str(M, "M ", s % 60, "s ", ms % 1000, "ms");
+        return fmt::format("{}M {}s {}ms", M, s % 60, ms % 1000);
 
     uint32_t H = M % 60;
 
-    return ykm_test_str(H, "H ", M % 60, "M ", s % 60, "s ", ms % 1000, "ms");
+        return fmt::format("{}H {}M {}s {}ms",H, M%60, s % 60, ms % 1000);
 }
 
 void do_tests(uint32_t ytest_indent, ::std::vector<::ykm_test::base*> ytestqueue, int argc, char** argv)
 {
     for (auto p : ytestqueue)
     {
-        _println(p->test_name, " begin");
+        _println("{} begin",p->test_name);
 
         _println("~~ <$>");
 
@@ -78,7 +78,7 @@ void do_tests(uint32_t ytest_indent, ::std::vector<::ykm_test::base*> ytestqueue
 
         _println("~~ <&>");
 
-        _println(p->test_name, " end\n");
+        _println("{} end\n",p->test_name);
     }
 }
 

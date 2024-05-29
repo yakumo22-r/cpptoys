@@ -56,7 +56,7 @@ enum class EC : unsigned
     YKM_ENUM_E__(A)        \
     YKM_ENUM_E__(C)        \
     YKM_ENUM_EN_(B, "{B}")
-// clang-format on
+    // clang-format on
 
     ENUM_ELEMENT_EC
 };
