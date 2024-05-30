@@ -1,6 +1,14 @@
 #ifndef YKM_APP_VIEWBOX_IMPL_WIN32_DEF_H
 #define YKM_APP_VIEWBOX_IMPL_WIN32_DEF_H
+
+#ifndef NOMINMAX
+#define NOMINMAX
 #include <Windows.h>
+#undef NOMINMAX
+#else
+#include <Windows.h>
+#endif
+
 #include <string>
 
 #include "interface.hpp"
