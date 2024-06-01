@@ -4,14 +4,14 @@
 #include <array>
 #include <bitset>
 #include <cstddef>
+#include <cstdint>
 #include <string_view>
 #include <type_traits>
 
 namespace ykm
 {
 
-template <typename E, size_t Size>
-struct enum_set : std::bitset<Size>
+template <typename E, size_t Size> struct enum_set : std::bitset<Size>
 {
   public:
     static_assert(std::is_enum_v<E> && std::is_unsigned_v<std::underlying_type_t<E>>, "type E must be unsigned enum (class)");
@@ -59,50 +59,55 @@ struct enum_set : std::bitset<Size>
     const std::bitset<Size>& bitset() const { return *this; }
 };
 
-template <uint64_t seed>
-inline constexpr static uint64_t enum_map_chash(const char* str)
+template <uint64_t Seed> inline constexpr uint64_t enum_name_chash(const char* str)
 {
-    uint64_t code = seed;
-    while (*str)
-    {
-        code = code * seed + *str++;
-    }
+    uint64_t code = Seed;
+    while (*str) code = code * Seed + *str++;
     return code;
 }
 
-using enum_map_hasher = uint64_t (*)(std::string_view);
+template <uint64_t Seed> uint64_t enum_name_hash(std::string_view strv)
+{
+    uint64_t code = Seed;
+    const char* str = strv.data();
+    while (*str) code = code * Seed + *str++;
+    return code;
+}
 
-#define YKM_ENUM_MAP_HASHER(SEED)        \
-    [](std::string_view strv)            \
-    {                                    \
-        uint64_t code = SEED;            \
-        const char* str = strv.data();   \
-        while (*str)                     \
-        {                                \
-            code = code * SEED + *str++; \
-        }                                \
-        return code;                     \
+using enum_name_hasher = uint64_t (*)(std::string_view);
+
+template <typename E> using enum_mapper = E (*)(uint64_t);
+
+#define YKM_ENUM_MAP_HASHER(SEED)                     \
+    [](std::string_view strv)                         \
+    {                                                 \
+        uint64_t code = SEED;                         \
+        const char* str = strv.data();                \
+        while (*str) { code = code * SEED + *str++; } \
+        return code;                                  \
     }
 
-template <typename E, size_t Size>
-struct enum_map
+template <typename E, size_t Size> struct enum_map
 {
     static_assert(std::is_enum_v<E> && std::is_unsigned_v<std::underlying_type_t<E>>, "type E must be unsigned enum (class)");
     using under_int = std::underlying_type_t<E>;
 
-    using mapper = E (*)(uint64_t);
-    using hasher = ykm::enum_map_hasher;
+    using mapper = ykm::enum_mapper<E>;
+    using hasher = ykm::enum_name_hasher;
 
-    inline static constexpr E null = E(~under_int(0));
-
-    constexpr enum_map(const std::initializer_list<std::pair<E, const char*>>& list, mapper str_v, hasher f) : null_cstr("(null)"), v_str(), str_v(str_v), _f(f)
+    constexpr enum_map(const std::initializer_list<std::pair<E, const char*>>& list, mapper str_v, hasher f)
+        : null_cstr("(null)"), e_list(), e_size(0), v_str(), str_v(str_v), _f(f)
     {
         v_str.fill(null_cstr);
 
+        uint32_t i = 0;
         for (auto& e : list)
         {
             v_str[size_t(e.first)] = e.second;
+            e_list[i] = e.first;
+            i++;
         }
+        e_size = i;
     }
 
     E by_name(std::string_view str) const { return str_v(_f(str)); }
@@ -114,10 +119,14 @@ struct enum_map
     bool has(E code) const { return size_t(code) >= Size && v_str[size_t(code)] != null_cstr; }
     bool has(std::string_view str) const { return str_v(_f(str)); }
 
+    const E* begin() const { return e_list.begin(); };
+    const E* end() const { return e_list.begin() + e_size; }
+
   private:
     const char* null_cstr;
+    std::array<E, Size + 1> e_list;
+    uint32_t e_size;
     std::array<const char*, Size + 1> v_str;
-    // std::unordered_map<std::string_view, E> str_v;
     mapper str_v;
     hasher _f;
 };
@@ -139,10 +148,10 @@ struct enum_map
 #define YKM_ENUM_MAP_EI_(e, i)      {YKM_ENUM_MAP_NS::e, #e},
 #define YKM_ENUM_MAP_ENI(e, n, i)   {YKM_ENUM_MAP_NS::e, n},
 
-#define YKM_ENUM_KM_E__(e)          case ykm::enum_map_chash<YKM_ENUM_HASHSEED>(#e): return YKM_ENUM_MAP_NS::e;
-#define YKM_ENUM_KM_EN_(e, n)       case ykm::enum_map_chash<YKM_ENUM_HASHSEED>(n):  return YKM_ENUM_MAP_NS::e;
-#define YKM_ENUM_KM_EI_(e, i)       case ykm::enum_map_chash<YKM_ENUM_HASHSEED>(#e): return YKM_ENUM_MAP_NS::e;
-#define YKM_ENUM_KM_ENI(e, n, i)    case ykm::enum_map_chash<YKM_ENUM_HASHSEED>(n):  return YKM_ENUM_MAP_NS::e;
+#define YKM_ENUM_KM_E__(e)          case ykm::enum_name_chash<YKM_ENUM_HASHSEED>(#e): return YKM_ENUM_MAP_NS::e;
+#define YKM_ENUM_KM_EN_(e, n)       case ykm::enum_name_chash<YKM_ENUM_HASHSEED>(n):  return YKM_ENUM_MAP_NS::e;
+#define YKM_ENUM_KM_EI_(e, i)       case ykm::enum_name_chash<YKM_ENUM_HASHSEED>(#e): return YKM_ENUM_MAP_NS::e;
+#define YKM_ENUM_KM_ENI(e, n, i)    case ykm::enum_name_chash<YKM_ENUM_HASHSEED>(n):  return YKM_ENUM_MAP_NS::e;
 
 #define YKM_ENUM_KMFUNC(MACRO,Default) \
     [](uint64_t code)->YKM_ENUM_MAP_NS {\
@@ -151,7 +160,10 @@ struct enum_map
     }\
 
 #define YKM_ENUM_HASHSEED 7575
-#define YKM_ENUM_MAP_BUILD(MACRO,Default) {MACRO(YKM_ENUM_MAP)},YKM_ENUM_KMFUNC(MACRO,Default),YKM_ENUM_MAP_HASHER(YKM_ENUM_HASHSEED)
+#define YKM_ENUM_MAP_BUILD(MACRO,Default)\
+    {MACRO(YKM_ENUM_MAP)},\
+    YKM_ENUM_KMFUNC(MACRO,Default),\
+    ykm::enum_name_hash<YKM_ENUM_HASHSEED>\
 
 
 } // namespace ykm

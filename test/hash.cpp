@@ -27,5 +27,9 @@ int main()
     std::cout << map.by_code(map.by_name("A")) << std::endl;
     std::cout << map[MyEnum::B] << std::endl;
     std::cout << (map["C"] == MyEnum::C) << std::endl;
+    for (auto e : map)
+    {
+        std::cout << map[e] << std::endl;
+    }
     return 0;
 }
