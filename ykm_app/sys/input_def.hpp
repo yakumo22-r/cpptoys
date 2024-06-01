@@ -130,32 +130,31 @@ struct touch
 };
 
 // clang-format off
-#define YKM_APP_SYS_BTNCODE_ELEM\
-    YKM_ENUM_EI_(invalid    , 0  )\
-    YKM_ENUM_EI_(left       , 1  )\
-    YKM_ENUM_EI_(right      , 2  )\
-    YKM_ENUM_EI_(middle     , 3  )\
-    YKM_ENUM_EI_(mouse1     , 1  )\
-    YKM_ENUM_EI_(mouse2     , 2  )\
-    YKM_ENUM_EI_(mouse3     , 3  )\
-    YKM_ENUM_EI_(mouse4     , 4  )\
-    YKM_ENUM_EI_(mouse5     , 5  )\
-    YKM_ENUM_EI_(mouse6     , 6  )\
-    YKM_ENUM_EI_(mouse7     , 7  )\
-    YKM_ENUM_EI_(mouse8     , 8  )\
-    YKM_ENUM_EI_(mouse9     , 9  )\
-    YKM_ENUM_EI_(mouse10    , 10 )\
-    YKM_ENUM_EI_(mouse11    , 11 )\
-    YKM_ENUM_EI_(mouse12    , 12 )\
-    YKM_ENUM_EI_(mouse13    , 13 )\
-    YKM_ENUM_EI_(mouse14    , 14 )\
-    YKM_ENUM_EI_(mouse15    , 15 )
+#define YKM_APP_SYS_BTNCODE_ELEM(MACRO)\
+    MACRO##_EI_(left       , 1  )\
+    MACRO##_EI_(right      , 2  )\
+    MACRO##_EI_(middle     , 3  )\
+    MACRO##_EI_(mouse1     , 1  )\
+    MACRO##_EI_(mouse2     , 2  )\
+    MACRO##_EI_(mouse3     , 3  )\
+    MACRO##_EI_(mouse4     , 4  )\
+    MACRO##_EI_(mouse5     , 5  )\
+    MACRO##_EI_(mouse6     , 6  )\
+    MACRO##_EI_(mouse7     , 7  )\
+    MACRO##_EI_(mouse8     , 8  )\
+    MACRO##_EI_(mouse9     , 9  )\
+    MACRO##_EI_(mouse10    , 10 )\
+    MACRO##_EI_(mouse11    , 11 )\
+    MACRO##_EI_(mouse12    , 12 )\
+    MACRO##_EI_(mouse13    , 13 )\
+    MACRO##_EI_(mouse14    , 14 )\
+    MACRO##_EI_(mouse15    , 15 )\
 
 // clang-format on
 
 enum class btncode : uint8_t
 {
-    YKM_APP_SYS_BTNCODE_ELEM
+    YKM_ENUM_DEFINE(YKM_APP_SYS_BTNCODE_ELEM) none,
 };
 
 extern const ykm::enum_map<btncode, 16> btncode_map;
@@ -179,126 +178,124 @@ struct mouse : istate<btncode, 16, 8>
 };
 
 // clang-format off
-#define YKM_APP_SYS_KEYCODE_ELEM \
-YKM_ENUM_EI_(invalid                        , 0   )\
+#define YKM_APP_SYS_KEYCODE_ELEM(MACRO) \
+MACRO##_EI_(backspace                      , 8   )\
+MACRO##_EI_(tab                            , 9   )\
 \
-YKM_ENUM_EI_(backspace                      , 8   )\
-YKM_ENUM_EI_(tab                            , 9   )\
+MACRO##_EI_(enter                          , 13  )\
+MACRO##_EI_(shift                          , 16  )\
+MACRO##_EI_(ctrl                           , 17  )\
+MACRO##_EI_(alt                            , 18  )\
+MACRO##_EI_(pausebreak                     , 19  )\
+MACRO##_EI_(capslock                       , 20  )\
 \
-YKM_ENUM_EI_(enter                          , 13  )\
-YKM_ENUM_EI_(shift                          , 16  )\
-YKM_ENUM_EI_(ctrl                           , 17  )\
-YKM_ENUM_EI_(alt                            , 18  )\
-YKM_ENUM_EI_(pausebreak                     , 19  )\
-YKM_ENUM_EI_(capslock                       , 20  )\
+MACRO##_EI_(esc                            , 27  )\
 \
-YKM_ENUM_EI_(esc                            , 27  )\
+MACRO##_EI_(space                          , 32  )\
+MACRO##_EI_(pageup                         , 33  )\
+MACRO##_EI_(pagedown                       , 34  )\
+MACRO##_EI_(end                            , 35  )\
+MACRO##_EI_(home                           , 36  )\
+MACRO##_EI_(left                           , 37  )\
+MACRO##_EI_(up                             , 38  )\
+MACRO##_EI_(right                          , 39  )\
+MACRO##_EI_(down                           , 40  )\
 \
-YKM_ENUM_EI_(space                          , 32  )\
-YKM_ENUM_EI_(pageup                         , 33  )\
-YKM_ENUM_EI_(pagedown                       , 34  )\
-YKM_ENUM_EI_(end                            , 35  )\
-YKM_ENUM_EI_(home                           , 36  )\
-YKM_ENUM_EI_(left                           , 37  )\
-YKM_ENUM_EI_(up                             , 38  )\
-YKM_ENUM_EI_(right                          , 39  )\
-YKM_ENUM_EI_(down                           , 40  )\
+MACRO##_EI_(insert                         , 45  )\
+MACRO##_EI_(del                            , 46  )\
 \
-YKM_ENUM_EI_(insert                         , 45  )\
-YKM_ENUM_EI_(del                            , 46  )\
-\
-YKM_ENUM_ENI(_0         , "0"               , 48  )\
-YKM_ENUM_ENI(_1         , "1"               , 49  )\
-YKM_ENUM_ENI(_2         , "2"               , 50  )\
-YKM_ENUM_ENI(_3         , "3"               , 51  )\
-YKM_ENUM_ENI(_4         , "4"               , 52  )\
-YKM_ENUM_ENI(_5         , "5"               , 53  )\
-YKM_ENUM_ENI(_6         , "6"               , 54  )\
-YKM_ENUM_ENI(_7         , "7"               , 55  )\
-YKM_ENUM_ENI(_8         , "8"               , 56  )\
-YKM_ENUM_ENI(_9         , "9"               , 57  )\
+MACRO##_ENI(_0         , "0"               , 48  )\
+MACRO##_ENI(_1         , "1"               , 49  )\
+MACRO##_ENI(_2         , "2"               , 50  )\
+MACRO##_ENI(_3         , "3"               , 51  )\
+MACRO##_ENI(_4         , "4"               , 52  )\
+MACRO##_ENI(_5         , "5"               , 53  )\
+MACRO##_ENI(_6         , "6"               , 54  )\
+MACRO##_ENI(_7         , "7"               , 55  )\
+MACRO##_ENI(_8         , "8"               , 56  )\
+MACRO##_ENI(_9         , "9"               , 57  )\
 \
 /* A-Z keycode.*/ \
-YKM_ENUM_EI_(A                              , 65  )\
-YKM_ENUM_EI_(B                              , 66  )\
-YKM_ENUM_EI_(C                              , 67  )\
-YKM_ENUM_EI_(D                              , 68  )\
-YKM_ENUM_EI_(E                              , 69  )\
-YKM_ENUM_EI_(H                              , 72  )\
-YKM_ENUM_EI_(I                              , 73  )\
-YKM_ENUM_EI_(J                              , 74  )\
-YKM_ENUM_EI_(K                              , 75  )\
-YKM_ENUM_EI_(L                              , 76  )\
-YKM_ENUM_EI_(M                              , 77  )\
-YKM_ENUM_EI_(N                              , 78  )\
-YKM_ENUM_EI_(O                              , 79  )\
-YKM_ENUM_EI_(P                              , 80  )\
-YKM_ENUM_EI_(Q                              , 81  )\
-YKM_ENUM_EI_(R                              , 82  )\
-YKM_ENUM_EI_(S                              , 83  )\
-YKM_ENUM_EI_(T                              , 84  )\
-YKM_ENUM_EI_(U                              , 85  )\
-YKM_ENUM_EI_(V                              , 86  )\
-YKM_ENUM_EI_(W                              , 87  )\
-YKM_ENUM_EI_(X                              , 88  )\
-YKM_ENUM_EI_(Y                              , 89  )\
-YKM_ENUM_EI_(Z                              , 90  )\
-YKM_ENUM_EI_(super                          , 91  )/* win in windows, command in mac */\
+MACRO##_EI_(A                              , 65  )\
+MACRO##_EI_(B                              , 66  )\
+MACRO##_EI_(C                              , 67  )\
+MACRO##_EI_(D                              , 68  )\
+MACRO##_EI_(E                              , 69  )\
+MACRO##_EI_(H                              , 72  )\
+MACRO##_EI_(I                              , 73  )\
+MACRO##_EI_(J                              , 74  )\
+MACRO##_EI_(K                              , 75  )\
+MACRO##_EI_(L                              , 76  )\
+MACRO##_EI_(M                              , 77  )\
+MACRO##_EI_(N                              , 78  )\
+MACRO##_EI_(O                              , 79  )\
+MACRO##_EI_(P                              , 80  )\
+MACRO##_EI_(Q                              , 81  )\
+MACRO##_EI_(R                              , 82  )\
+MACRO##_EI_(S                              , 83  )\
+MACRO##_EI_(T                              , 84  )\
+MACRO##_EI_(U                              , 85  )\
+MACRO##_EI_(V                              , 86  )\
+MACRO##_EI_(W                              , 87  )\
+MACRO##_EI_(X                              , 88  )\
+MACRO##_EI_(Y                              , 89  )\
+MACRO##_EI_(Z                              , 90  )\
+MACRO##_EI_(super                          , 91  )/* win in windows, command in mac */\
 \
-YKM_ENUM_ENI(np_0       , "numpad(0)"       , 96  )\
-YKM_ENUM_ENI(np_1       , "numpad(1)"       , 97  )\
-YKM_ENUM_ENI(np_2       , "numpad(2)"       , 98  )\
-YKM_ENUM_ENI(np_3       , "numpad(3)"       , 99  )\
-YKM_ENUM_ENI(np_4       , "numpad(4)"       , 100 )\
-YKM_ENUM_ENI(np_5       , "numpad(5)"       , 101 )\
-YKM_ENUM_ENI(np_6       , "numpad(6)"       , 102 )\
-YKM_ENUM_ENI(np_7       , "numpad(7)"       , 103 )\
-YKM_ENUM_ENI(np_8       , "numpad(8)"       , 104 )\
-YKM_ENUM_ENI(np_9       , "numpad(9)"       , 105 )\
-YKM_ENUM_ENI(np_mul     , "numpad(*)"       , 106 )\
-YKM_ENUM_ENI(np_plus    , "numpad(+)"       , 107 )\
-YKM_ENUM_ENI(np_enter   , "numpad(enter)"   , 108 )\
-YKM_ENUM_ENI(np_minus   , "numpad(-)"       , 109 )\
-YKM_ENUM_ENI(np_dot     , "numpad(.)"       , 110 )\
-YKM_ENUM_ENI(np_divide  , "numpad(/)"       , 111 )\
+MACRO##_ENI(np_0       , "numpad(0)"       , 96  )\
+MACRO##_ENI(np_1       , "numpad(1)"       , 97  )\
+MACRO##_ENI(np_2       , "numpad(2)"       , 98  )\
+MACRO##_ENI(np_3       , "numpad(3)"       , 99  )\
+MACRO##_ENI(np_4       , "numpad(4)"       , 100 )\
+MACRO##_ENI(np_5       , "numpad(5)"       , 101 )\
+MACRO##_ENI(np_6       , "numpad(6)"       , 102 )\
+MACRO##_ENI(np_7       , "numpad(7)"       , 103 )\
+MACRO##_ENI(np_8       , "numpad(8)"       , 104 )\
+MACRO##_ENI(np_9       , "numpad(9)"       , 105 )\
+MACRO##_ENI(np_mul     , "numpad(*)"       , 106 )\
+MACRO##_ENI(np_plus    , "numpad(+)"       , 107 )\
+MACRO##_ENI(np_enter   , "numpad(enter)"   , 108 )\
+MACRO##_ENI(np_minus   , "numpad(-)"       , 109 )\
+MACRO##_ENI(np_dot     , "numpad(.)"       , 110 )\
+MACRO##_ENI(np_divide  , "numpad(/)"       , 111 )\
 \
-YKM_ENUM_EI_(F1                             , 112 )\
-YKM_ENUM_EI_(F2                             , 113 )\
-YKM_ENUM_EI_(F3                             , 114 )\
-YKM_ENUM_EI_(F4                             , 115 )\
-YKM_ENUM_EI_(F5                             , 116 )\
-YKM_ENUM_EI_(F6                             , 117 )\
-YKM_ENUM_EI_(F7                             , 118 )\
-YKM_ENUM_EI_(F8                             , 119 )\
-YKM_ENUM_EI_(F9                             , 120 )\
-YKM_ENUM_EI_(F10                            , 121 )\
-YKM_ENUM_EI_(F11                            , 122 )\
-YKM_ENUM_EI_(F12                            , 123 )\
+MACRO##_EI_(F1                             , 112 )\
+MACRO##_EI_(F2                             , 113 )\
+MACRO##_EI_(F3                             , 114 )\
+MACRO##_EI_(F4                             , 115 )\
+MACRO##_EI_(F5                             , 116 )\
+MACRO##_EI_(F6                             , 117 )\
+MACRO##_EI_(F7                             , 118 )\
+MACRO##_EI_(F8                             , 119 )\
+MACRO##_EI_(F9                             , 120 )\
+MACRO##_EI_(F10                            , 121 )\
+MACRO##_EI_(F11                            , 122 )\
+MACRO##_EI_(F12                            , 123 )\
 \
-YKM_ENUM_ENI(l_shift     , "l-shift"        , 160 )\
-YKM_ENUM_ENI(r_shift     , "r-shift"        , 161 )\
-YKM_ENUM_ENI(l_ctrl      , "l-ctrl"         , 162 )\
-YKM_ENUM_ENI(r_ctrl      , "r-ctrl"         , 163 )\
-YKM_ENUM_ENI(l_alt       , "l-alt"          , 164 )\
-YKM_ENUM_ENI(r_alt       , "r-alt"          , 165 )\
+MACRO##_ENI(l_shift     , "l-shift"        , 160 )\
+MACRO##_ENI(r_shift     , "r-shift"        , 161 )\
+MACRO##_ENI(l_ctrl      , "l-ctrl"         , 162 )\
+MACRO##_ENI(r_ctrl      , "r-ctrl"         , 163 )\
+MACRO##_ENI(l_alt       , "l-alt"          , 164 )\
+MACRO##_ENI(r_alt       , "r-alt"          , 165 )\
 \
-YKM_ENUM_ENI(colon       , "(:)"            , 186 )\
-YKM_ENUM_ENI(equal       , "(=)"            , 187 )\
-YKM_ENUM_ENI(comma       , "(,)"            , 188 )\
-YKM_ENUM_ENI(minus       , "(-)"            , 189 )\
-YKM_ENUM_ENI(period      , "(.)"            , 190 )\
-YKM_ENUM_ENI(slash       , "(/)"            , 191 )\
-YKM_ENUM_ENI(tilde       , "(~)"            , 192 )\
+MACRO##_ENI(colon       , "(:)"            , 186 )\
+MACRO##_ENI(equal       , "(=)"            , 187 )\
+MACRO##_ENI(comma       , "(,)"            , 188 )\
+MACRO##_ENI(minus       , "(-)"            , 189 )\
+MACRO##_ENI(period      , "(.)"            , 190 )\
+MACRO##_ENI(slash       , "(/)"            , 191 )\
+MACRO##_ENI(tilde       , "(~)"            , 192 )\
 \
-YKM_ENUM_ENI(bracket_left   ,"([)"          , 219 )\
-YKM_ENUM_ENI(backslash      ,"(\\)"         , 220 )\
-YKM_ENUM_ENI(bracket_right  ,"(])"          , 221 )\
-YKM_ENUM_ENI(quotation      ,"(')"          , 222 )
+MACRO##_ENI(bracket_left   ,"([)"          , 219 )\
+MACRO##_ENI(backslash      ,"(\\)"         , 220 )\
+MACRO##_ENI(bracket_right  ,"(])"          , 221 )\
+MACRO##_ENI(quotation      ,"(')"          , 222 )
 
 // clang-format on
 enum class keycode : uint8_t
 {
-    YKM_APP_SYS_KEYCODE_ELEM
+    YKM_ENUM_DEFINE(YKM_APP_SYS_KEYCODE_ELEM) none,
 };
 
 extern const ykm::enum_map<keycode, 256> keycode_map;

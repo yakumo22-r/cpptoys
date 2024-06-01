@@ -179,7 +179,6 @@
 #define GET_VK_FUNCTION_PROCADDR(function) function = reinterpret_cast<PFN_##function>(lib.get_function<PFN_##function>(#function));
 
 APPLY_PFN_DEF_VK_FUNCTIONS(EXTERN_VK_FUNCTION_MACRO);
-
 void init_vk_loader();
 
 #define YKM_DYLIB_VK_DEF_LOADER                               \

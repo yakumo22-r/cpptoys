@@ -1,6 +1,11 @@
 set_languages("c++20")
 set_toolchains("clang")
 
+target("hash")
+    add_includedirs("../headonly")
+    add_files("hash.cpp")
+    set_targetdir("$(projectdir)/xmake-build")
+
 target("test_lua")
     add_files("test_lua.cpp")
     set_targetdir("$(projectdir)/xmake-build")
