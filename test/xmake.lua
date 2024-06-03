@@ -1,5 +1,5 @@
 set_languages("c++20")
-set_toolchains("clang")
+--set_toolchains("clang")
 
 target("hash")
     add_includedirs("../headonly")
@@ -28,9 +28,15 @@ target("vbox")
 
 target("test_vk")
     add_includedirs("../headonly")
-    add_deps("ykm_viewbox")
-    add_defines("VK_NO_PROTOTYPES")
-    add_packages("dylib")
+    --add_deps("ykm_viewbox")
+    if is_plat("macosx") then
+        add_linkdirs("../mac_vklib")
+        add_links("vulkan")
+    else
+        add_packages("dylib")
+        add_defines("VK_NO_PROTOTYPES")
+    end
     add_packages("vulkan-headers")
+    add_packages("glfw")
     set_targetdir("$(projectdir)/xmake-build")
     add_files("./test_vk.cpp")

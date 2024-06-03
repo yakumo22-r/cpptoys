@@ -5,12 +5,26 @@
    some code copy at https://blog.csdn.net/smcnjyddx0623/article/details/134908747
 */
 
+#ifdef __APPLE__
+
+#ifdef VK_NO_PROTOTYPES
+#undef VK_NO_PROTOTYPES
+#include <vulkan/vulkan.h>
+#else
+#include <vulkan/vulkan.h>
+#endif
+
+#define YKM_DYLIB_VK_DEF_LOADER
+inline void init_vk_loader() {}
+
+#else
+
 #ifndef VK_NO_PROTOTYPES
 #define VK_NO_PROTOTYPES
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 #undef VK_NO_PROTOTYPES
 #else
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 #endif
 
 #include <dylib.hpp>
@@ -188,5 +202,23 @@ void init_vk_loader();
         static dylib lib(VULKAN_LIB, false);                  \
         APPLY_PFN_DEF_VK_FUNCTIONS(GET_VK_FUNCTION_PROCADDR); \
     }
+
+#endif
+
+#include <vector>
+
+inline void ykm_vk_extension_spec_wrap(std::vector<const char*>& exs, VkInstanceCreateInfo& info, uint32_t sdkVersion)
+{
+#ifdef __APPLE__
+    /*
+       If using MacOS with the latest MoltenVK sdk, you may get VK_ERROR_INCOMPATIBLE_DRIVER returned from vkCreateInstance. According to the Getting Start
+        Notes. Beginning with the 1.3.216 Vulkan SDK, the VK_KHR_PORTABILITY_subset extension is mandatory.*/
+    if (sdkVersion >= VK_MAKE_VERSION(1, 3, 216))
+    {
+        exs.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+        info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+    }
+#endif
+}
 
 #endif
