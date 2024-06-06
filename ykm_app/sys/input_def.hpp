@@ -148,7 +148,7 @@ struct touch
     MACRO##_EI_(mouse12    , 12 )\
     MACRO##_EI_(mouse13    , 13 )\
     MACRO##_EI_(mouse14    , 14 )\
-    MACRO##_EI_(mouse15    , 15 )\
+    MACRO##_EI_(mouse15    , 15 )
 
 // clang-format on
 
@@ -221,6 +221,8 @@ MACRO##_EI_(B                              , 66  )\
 MACRO##_EI_(C                              , 67  )\
 MACRO##_EI_(D                              , 68  )\
 MACRO##_EI_(E                              , 69  )\
+MACRO##_EI_(F                              , 70  )\
+MACRO##_EI_(G                              , 71  )\
 MACRO##_EI_(H                              , 72  )\
 MACRO##_EI_(I                              , 73  )\
 MACRO##_EI_(J                              , 74  )\
@@ -300,7 +302,144 @@ enum class keycode : uint8_t
 
 extern const ykm::enum_map<keycode, 256> keycode_map;
 
-inline keycode kc_by_win(uint32_t kc) { return keycode(kc); }
+inline keycode kc_by_sc(int scancode)
+{
+#if defined(_WIN32)
+    return keycode(kc);
+#elif defined(__APPLE__)
+    static const keycode maps[0x80] = {
+        keycode::A,             // 0
+        keycode::S,             // 1
+        keycode::D,             // 2
+        keycode::F,             // 3
+        keycode::H,             // 4
+        keycode::G,             // 5
+        keycode::Z,             // 6
+        keycode::X,             // 7
+        keycode::C,             // 8
+        keycode::V,             // 9
+        keycode::none,          // 10
+        keycode::B,             // 11
+        keycode::Q,             // 12
+        keycode::W,             // 13
+        keycode::E,             // 14
+        keycode::R,             // 15
+        keycode::Y,             // 16
+        keycode::T,             // 17
+        keycode::_1,            // 18
+        keycode::_2,            // 19
+        keycode::_3,            // 20
+        keycode::_4,            // 21
+        keycode::_6,            // 22
+        keycode::_5,            // 23
+        keycode::equal,         // 24
+        keycode::_9,            // 25
+        keycode::_7,            // 26
+        keycode::minus,         // 27
+        keycode::_8,            // 28
+        keycode::_0,            // 29
+        keycode::bracket_right, // 30
+        keycode::O,             // 31
+        keycode::U,             // 32
+        keycode::bracket_left,  // 33
+        keycode::I,             // 34
+        keycode::P,             // 35
+        keycode::enter,         // 36
+        keycode::L,             // 37
+        keycode::J,             // 38
+        keycode::quotation,     // 39
+        keycode::K,             // 40
+        keycode::colon,         // 41
+        keycode::backslash,     // 42
+        keycode::comma,         // 43
+        keycode::slash,         // 44
+        keycode::N,             // 45
+        keycode::M,             // 46
+        keycode::period,        // 47
+        keycode::tab,           // 48
+        keycode::space,         // 49
+        keycode::tilde,         // 50
+        keycode::backspace,     // 51
+        keycode::none,          // 52
+        keycode::esc,           // 53
+        keycode::none,          // 54
+        keycode::super,         // 55
+        keycode::l_shift,       // 56
+        keycode::capslock,      // 57
+        keycode::l_alt,         // 58
+        keycode::l_ctrl,        // 59
+        keycode::r_shift,       // 60
+        keycode::r_alt,         // 61
+        keycode::r_ctrl,        // 62
+        keycode::none,          // 63
+        keycode::none,          // 64
+        keycode::np_dot,        // 65
+        keycode::none,          // 66
+        keycode::np_mul,        // 67
+        keycode::none,          // 68
+        keycode::np_plus,       // 69
+        keycode::none,          // 70
+        keycode::none,          // 71
+        keycode::none,          // 72
+        keycode::none,          // 73
+        keycode::none,          // 74
+        keycode::np_divide,     // 75
+        keycode::np_enter,      // 76
+        keycode::none,          // 77
+        keycode::np_minus,      // 78
+        keycode::none,          // 79
+        keycode::none,          // 80
+        keycode::none,          // 81
+        keycode::np_0,          // 82
+        keycode::np_1,          // 83
+        keycode::np_2,          // 84
+        keycode::np_3,          // 85
+        keycode::np_4,          // 86
+        keycode::np_5,          // 87
+        keycode::np_6,          // 88
+        keycode::np_7,          // 89
+        keycode::none,          // 80
+        keycode::np_8,          // 91
+        keycode::np_9,          // 92
+        keycode::none,          // 93
+        keycode::none,          // 94
+        keycode::none,          // 95
+        keycode::F5,            // 96
+        keycode::F6,            // 97
+        keycode::F7,            // 98
+        keycode::F3,            // 99
+        keycode::F8,            // 100
+        keycode::F9,            // 101
+        keycode::none,          // 102
+        keycode::F11,           // 103
+        keycode::none,          // 104
+        keycode::none,          // 105
+        keycode::none,          // 106
+        keycode::none,          // 107
+        keycode::none,          // 108
+        keycode::F10,           // 109
+        keycode::none,          // 110
+        keycode::F12,           // 111
+        keycode::none,          // 112
+        keycode::none,          // 113
+        keycode::none,          // 114
+        keycode::home,          // 115
+        keycode::pageup,        // 116
+        keycode::none,          // 117
+        keycode::F4,            // 118
+        keycode::end,           // 119
+        keycode::F2,            // 120
+        keycode::pagedown,      // 121
+        keycode::F1,            // 122
+        keycode::left,          // 123
+        keycode::right,         // 124
+        keycode::down,          // 125
+        keycode::up,            // 126
+        keycode::none,          // 127
+    };
+    return maps[scancode & 0x7F];
+#endif
+}
 
 using keyboard = istate<keycode, 256, 64>;
 

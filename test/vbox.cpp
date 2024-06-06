@@ -1,8 +1,6 @@
 #include <exception>
 #include <iostream>
 
-#include <format>
-
 #include <ykm_app_viewbox.h>
 
 int main()
@@ -17,10 +15,10 @@ int main()
         int code = 0;
         while (!code)
         {
-            for (auto kc : vb.event().keyboard.buf_press())
-            {
-                std::cout << std::format("press {} {}", ykm::input::keycode_map[kc], size_t(kc)) << std::endl;
-            }
+            //for (auto kc : vb.event().keyboard.buf_press())
+            //{
+            //    std::cout << std::format("press {} {}", ykm::input::keycode_map[kc], size_t(kc)) << std::endl;
+            //}
             code = vb.process_loop();
         }
 

@@ -12,7 +12,7 @@
     fmt::println("warn: {}\n@{:>8}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__);
 
 #define ykm_log(...)\
-    fmt::println("log: {}\n", __VA_ARGS__);
+    fmt::println("log: {}", fmt::format(__VA_ARGS__));
 #else
 
 #define ykm_err(...)

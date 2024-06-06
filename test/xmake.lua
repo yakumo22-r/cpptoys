@@ -28,7 +28,12 @@ target("test_async")
 
 target("vbox")
     add_includedirs("../headonly")
-    add_deps("ykm_viewbox")
+    if is_plat("macosx") then
+        add_defines("YKM_VIEWBOX_GLFW")
+        add_deps("ykm_viewbox",{ykm_viewbox_glfw=true,ykm_viewbox_debug=true})
+    else
+        add_deps("ykm_viewbox")
+    end
     set_targetdir("$(projectdir)/xmake-build")
     add_files("./vbox.cpp")
 

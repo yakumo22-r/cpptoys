@@ -23,9 +23,9 @@ target("ykm_viewbox")
         add_defines("YKM_VIEWBOX_GLFW")
         add_packages("glfw")
         add_files("viewbox/vb_glfw.cpp")
-    end
-    add_files("sys/input_map.cpp")
-    if is_plat("windows") then
+    elseif is_plat("windows") then
         add_files("viewbox/win32.cpp")
         add_syslinks("user32")
     end
+
+    add_files("sys/input_map.cpp")

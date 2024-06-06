@@ -10,7 +10,7 @@ version: dev -1
 #include "../viewbox/interface.hpp"
 
 #if defined(YKM_VIEWBOX_GLFW)
-#error "the viewbox wrap glfw is not code down, not for use"
+//#error "the viewbox wrap glfw is not code down, not for use"
 #elif defined(_WIN32)
 
 #if __cplusplus < 202002L
@@ -18,7 +18,7 @@ version: dev -1
 #endif
 
 #elif defined(__APPLE__)
-#error "viewbox in apple no implemention with out glfw"
+#error "viewbox in apple no implemention without glfw yet"
 #endif
 
 
