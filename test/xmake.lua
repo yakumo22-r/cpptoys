@@ -20,6 +20,12 @@ target("ytest")
     set_targetdir("$(projectdir)/xmake-build")
     add_files("./ytest.cpp")
 
+
+target("test_async")
+    add_includedirs("../headonly")
+    set_targetdir("$(projectdir)/xmake-build")
+    add_files("./test_async.cpp")
+
 target("vbox")
     add_includedirs("../headonly")
     add_deps("ykm_viewbox")
