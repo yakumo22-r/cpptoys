@@ -13,7 +13,7 @@ option_end()
 
 target("ykm_viewbox")
     set_kind("static")
-    set_languages("c++20")
+    set_languages("c++17")
     add_includedirs("../headonly")
     add_includedirs("./include",{public=true})
     add_options("ykm_viewbox_debug")
@@ -24,7 +24,7 @@ target("ykm_viewbox")
         add_packages("glfw")
         add_files("viewbox/vb_glfw.cpp")
     elseif is_plat("windows") then
-        add_files("viewbox/win32.cpp")
+        add_files("viewbox/vb_win32.cpp")
         add_syslinks("user32")
     end
 

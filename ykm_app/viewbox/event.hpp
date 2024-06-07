@@ -17,6 +17,7 @@ struct viewbox_xy
     int32_t x;
     int32_t y;
     bool operator==(viewbox_xy r) { return x == r.x && y == r.y; }
+    bool operator!=(viewbox_xy r) { return x != r.x && y != r.y; }
 };
 struct viewbox_evt
 {

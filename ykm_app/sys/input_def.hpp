@@ -1,5 +1,5 @@
 /*
-   user hardware interaction defs
+   user hardware interaction def
 
 version: dev 0.0.2
 date : 2024/5/25
@@ -305,7 +305,7 @@ extern const ykm::enum_map<keycode, 256> keycode_map;
 inline keycode kc_by_sc(int scancode)
 {
 #if defined(_WIN32)
-    return keycode(kc);
+    return keycode(scancode);
 #elif defined(__APPLE__)
     static const keycode maps[0x80] = {
         keycode::A,             // 0

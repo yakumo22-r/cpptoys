@@ -13,10 +13,6 @@ version: dev -1
 //#error "the viewbox wrap glfw is not code down, not for use"
 #elif defined(_WIN32)
 
-#if __cplusplus < 202002L
-#error "need c++20 or high"
-#endif
-
 #elif defined(__APPLE__)
 #error "viewbox in apple no implemention without glfw yet"
 #endif

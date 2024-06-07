@@ -1,6 +1,6 @@
 #ifndef YKM_APP_VIEWBOX_DEBUG
 #define YKM_APP_VIEWBOX_DEBUG
-#include "fmt/core.h"
+
 #include <fmt/format.h>
 
 // clang-format off

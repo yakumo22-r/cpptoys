@@ -9,16 +9,11 @@ TODO: text input with candicate
 #ifndef YKM_VIEWBOX_WIN32_HPP
 #define YKM_VIEWBOX_WIN32_HPP
 
-#include "win32_def.h"
-#include <format>
+#include "vb_win32.h"
+
 #include <winuser.h>
 
-#ifdef YKM_VIEWBOX_DEBUG
-#include <iostream>
-#define YKM_debug(...) ::std::cout << ::std::format(__VA_ARGS__) << ::std::endl;
-#else
-#define YKM_debug(...)
-#endif
+#include "debug.hpp"
 
 namespace ykm
 {
@@ -41,7 +36,7 @@ void win32_plat_h::GetErrInfo() noexcept
         LocalFree(pMsgBuf);
         err = pMsgBuf;
     }
-    last_err = std::format("[Error Code] 0x{:X}({}) \n[Description] {} \n", hr, (unsigned long)hr, err);
+    last_err = fmt::format("[Error Code] 0x{:X}({}) \n[Description] {} \n", hr, (unsigned long)hr, err);
 }
 
 inline constexpr char const* class_name = "ykm_viewbox_0_0_1";
@@ -104,60 +99,60 @@ LRESULT win32_plat_h::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         break;
 
     case WM_KEYDOWN:
-        evts().keyboard.press(input::kc_by_win(wParam));
+        evts().keyboard.press(input::kc_by_sc(wParam));
 
         if (wParam == VK_SHIFT)
         {
             if ((GetAsyncKeyState(VK_LSHIFT) & 0x8000))
-                evts().keyboard.press(input::kc_by_win(VK_LSHIFT));
+                evts().keyboard.press(input::kc_by_sc(VK_LSHIFT));
             if ((GetAsyncKeyState(VK_RSHIFT) & 0x8000))
-                evts().keyboard.press(input::kc_by_win(VK_RSHIFT));
+                evts().keyboard.press(input::kc_by_sc(VK_RSHIFT));
         }
         else if (wParam == VK_MENU)
         {
             if ((GetAsyncKeyState(VK_LMENU) & 0x8000))
-                evts().keyboard.press(input::kc_by_win(VK_LMENU));
+                evts().keyboard.press(input::kc_by_sc(VK_LMENU));
             if ((GetAsyncKeyState(VK_RMENU) & 0x8000))
-                evts().keyboard.press(input::kc_by_win(VK_RMENU));
+                evts().keyboard.press(input::kc_by_sc(VK_RMENU));
         }
         else if (wParam == VK_CONTROL)
         {
             if ((GetAsyncKeyState(VK_LCONTROL) & 0x8000))
-                evts().keyboard.press(input::kc_by_win(VK_LCONTROL));
+                evts().keyboard.press(input::kc_by_sc(VK_LCONTROL));
             if ((GetAsyncKeyState(VK_RCONTROL) & 0x8000))
-                evts().keyboard.press(input::kc_by_win(VK_RCONTROL));
+                evts().keyboard.press(input::kc_by_sc(VK_RCONTROL));
         }
 
         break;
     case WM_KEYUP:
-        evts().keyboard.release(input::kc_by_win(wParam));
+        evts().keyboard.release(input::kc_by_sc(wParam));
         if (wParam == VK_SHIFT)
         {
             if (!(GetAsyncKeyState(VK_LSHIFT) & 0x8000))
-                evts().keyboard.release(input::kc_by_win(VK_LSHIFT));
+                evts().keyboard.release(input::kc_by_sc(VK_LSHIFT));
             if (!(GetAsyncKeyState(VK_RSHIFT) & 0x8000))
-                evts().keyboard.release(input::kc_by_win(VK_RSHIFT));
+                evts().keyboard.release(input::kc_by_sc(VK_RSHIFT));
         }
         else if (wParam == VK_MENU)
         {
             if (!(GetAsyncKeyState(VK_LMENU) & 0x8000))
-                evts().keyboard.release(input::kc_by_win(VK_LMENU));
+                evts().keyboard.release(input::kc_by_sc(VK_LMENU));
             if (!(GetAsyncKeyState(VK_RMENU) & 0x8000))
-                evts().keyboard.release(input::kc_by_win(VK_RMENU));
+                evts().keyboard.release(input::kc_by_sc(VK_RMENU));
         }
         else if (wParam == VK_CONTROL)
         {
             if (!(GetAsyncKeyState(VK_LCONTROL) & 0x8000))
-                evts().keyboard.release(input::kc_by_win(VK_LCONTROL));
+                evts().keyboard.release(input::kc_by_sc(VK_LCONTROL));
             if (!(GetAsyncKeyState(VK_RCONTROL) & 0x8000))
-                evts().keyboard.release(input::kc_by_win(VK_RCONTROL));
+                evts().keyboard.release(input::kc_by_sc(VK_RCONTROL));
         }
         break;
     case WM_SYSKEYDOWN:
-        evts().keyboard.press(input::kc_by_win(wParam));
+        evts().keyboard.press(input::kc_by_sc(wParam));
         break;
     case WM_SYSKEYUP:
-        evts().keyboard.release(input::kc_by_win(wParam));
+        evts().keyboard.release(input::kc_by_sc(wParam));
         break;
 
     case WM_LBUTTONDOWN:
@@ -188,20 +183,17 @@ LRESULT win32_plat_h::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_NCLBUTTONDOWN:
         if (wParam == HTCLOSE || wParam == HTMAXBUTTON || wParam == HTMINBUTTON || wParam == HTHELP)
         {
-            YKM_debug("WM_NCLBUTTONDOWN 1, {}", wParam);
             rw_hithc = wParam;
             PostMessage(hWnd, WM_ACTIVATE, WA_CLICKACTIVE, 0);
         }
         else if (wParam >= HTLEFT && wParam <= HTBOTTOMRIGHT)
         {
-            YKM_debug("resize, {}", wParam);
             state.set(rw_resizing);
             rw_hithc = wParam;
             GetCursorPos(&rw_cursor);
         }
         else if (wParam == HTCAPTION)
         {
-            YKM_debug("moving, {}", wParam);
             state.set(rw_moving);
             rw_hithc = wParam;
             GetCursorPos(&rw_cursor);
@@ -376,7 +368,8 @@ viewbox::result viewbox::process_loop()
         case HTTOP:
             deltaHeight = ph->rw_cursor.y - cursor.y;
             size.y += deltaHeight;
-            pos.y = -(ph->lt_pos.y - deltaHeight + size.y / 2 - ph->screen_half.y);
+            ph->lt_pos.y -= deltaHeight;
+            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
             break;
 
         case HTTOPRIGHT:
@@ -384,7 +377,8 @@ viewbox::result viewbox::process_loop()
             deltaHeight = ph->rw_cursor.y - cursor.y;
             size.x += deltaWidth;
             size.y += deltaHeight;
-            pos.y = -(ph->lt_pos.y - deltaHeight + size.y / 2 - ph->screen_half.y);
+            ph->lt_pos.y -= deltaHeight;
+            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
             pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
             break;
 
@@ -393,8 +387,10 @@ viewbox::result viewbox::process_loop()
             deltaHeight = ph->rw_cursor.y - cursor.y;
             size.x += deltaWidth;
             size.y += deltaHeight;
-            pos.y = -(ph->lt_pos.y - deltaHeight + size.y / 2 - ph->screen_half.y);
-            pos.x = ph->lt_pos.x - deltaWidth + size.x / 2 - ph->screen_half.x;
+            ph->lt_pos.y -= deltaHeight;
+            ph->lt_pos.x -= deltaWidth;
+            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
+            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
             break;
 
         case HTRIGHT:
@@ -406,7 +402,8 @@ viewbox::result viewbox::process_loop()
         case HTLEFT:
             deltaWidth = ph->rw_cursor.x - cursor.x;
             size.x += deltaWidth;
-            pos.x = ph->lt_pos.x - deltaWidth + size.x / 2 - ph->screen_half.x;
+            ph->lt_pos.x -= deltaWidth;
+            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
             break;
 
         case HTBOTTOMRIGHT:
@@ -423,7 +420,8 @@ viewbox::result viewbox::process_loop()
             deltaHeight = cursor.y - ph->rw_cursor.y;
             size.x += deltaWidth;
             size.y += deltaHeight;
-            pos.x = ph->lt_pos.x - deltaWidth + size.x / 2 - ph->screen_half.x;
+            ph->lt_pos.x -= deltaWidth;
+            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
             pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
             break;
 
