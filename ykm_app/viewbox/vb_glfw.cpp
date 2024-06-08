@@ -5,6 +5,7 @@
 #include "vb_glfw.h"
 #include "GLFW/glfw3.h"
 #include "debug.hpp"
+#include "event.hpp"
 #include <../sys/input_def.hpp>
 #include <memory>
 #include <unordered_set>
@@ -31,7 +32,8 @@ struct glfw_global
 
     void poll_events()
     {
-        if (++process_count >= all_wnds.size())
+        process_count++;
+        if (process_count >= all_wnds.size())
         {
             glfwPollEvents();
             process_count = 0;
@@ -96,9 +98,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     auto& ph = *YKM_VIEWBOX_PH(user_pointer);
 
     if (action == GLFW_PRESS)
-        ph.evts().mouse.press(input::mousecode(button+1));
+        ph.evts().mouse.press(input::mouse_evt(button + 1));
     else
-        ph.evts().mouse.release(input::mousecode(button+1));
+        ph.evts().mouse.release(input::mouse_evt(button + 1));
 }
 
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
@@ -110,7 +112,7 @@ void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
     // ykm_log("{} mouse move {} {}", ph.vb->title(), xpos,ypos);
     ph.evts().mouse.x() = (int)xpos;
     ph.evts().mouse.y() = (int)ypos;
-    ph.evts().mouse.press(input::mousecode::move);
+    ph.evts().mouse.press(input::mouse_evt::move);
 }
 
 void wheel_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -119,10 +121,69 @@ void wheel_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (!user_pointer) return;
     auto& ph = *YKM_VIEWBOX_PH(user_pointer);
 
-    ph.evts().mouse.press(input::mousecode::scroll);
-    ph.evts().mouse.scroll_x() = (int)(xoffset * 1000);
-    ph.evts().mouse.scroll_y() = (int)(yoffset * 1000);
-    ykm_log("{} wheel {} {}", ph.vb->title(), xoffset, yoffset);
+    ph.evts().mouse.press(input::mouse_evt::scroll);
+    ph.evts().mouse.scroll_x() = (int)(xoffset * 10);
+    ph.evts().mouse.scroll_y() = (int)(yoffset * 10);
+}
+
+inline viewbox_xy pos_to_ltpos(viewbox_xy pos, viewbox_xy size, viewbox_xy half_screen)
+{
+    return {pos.x + half_screen.x - (size.x / 2), //
+            half_screen.y - pos.y - (size.y / 2)};
+}
+
+inline viewbox_xy ltpos_to_pos(viewbox_xy lt_pos, viewbox_xy size, viewbox_xy half_screen)
+{
+    return {lt_pos.x - half_screen.x + (size.x / 2), //
+            half_screen.y + half_screen.y - (size.y / 2)};
+}
+
+void window_pos_callback(GLFWwindow* window, int x, int y)
+{
+    auto user_pointer = glfwGetWindowUserPointer(window);
+    if (!user_pointer) return;
+    auto& ph = *YKM_VIEWBOX_PH(user_pointer);
+
+    auto pos = ltpos_to_pos({x, y}, ph.size(), ph.screen_half);
+
+    if (pos != ph.pos())
+    {
+        ph.evts().push_evts(viewbox_evt::move);
+        ph.pos() = pos;
+        ykm_log("{} pos {} {}", ph.title(), pos.x, pos.y);
+    }
+}
+
+void window_size_callback(GLFWwindow* window, int x, int y)
+{
+    auto user_pointer = glfwGetWindowUserPointer(window);
+    if (!user_pointer) return;
+    auto& ph = *YKM_VIEWBOX_PH(user_pointer);
+
+    auto pos = ltpos_to_pos({x, y}, ph.size(), ph.screen_half);
+
+    ph.evts().push_evts(viewbox_evt::resize);
+    ph.content_size() = {x, y};
+
+    ph.size() = {ph.frame_size.x + x, ph.frame_size.y + y};
+
+    ykm_log("{} resize {} {}", ph.title(), ph.content_size().x, ph.content_size().y);
+}
+
+void window_focus_callback(GLFWwindow* window, int focusd)
+{
+    auto user_pointer = glfwGetWindowUserPointer(window);
+    if (!user_pointer) return;
+    auto& ph = *YKM_VIEWBOX_PH(user_pointer);
+
+    if (focusd) //
+    {
+        ph.evts().push_evts(viewbox_evt::active);
+    }
+    else //
+    {
+        ph.evts().push_evts(viewbox_evt::unactive);
+    }
 }
 
 viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title)
@@ -135,7 +196,24 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
     ph.hWnd = nullptr;
 
     ph.hWnd = glfwCreateWindow(sizeX, sizeY, title, nullptr, nullptr);
+
     if (!ph.hWnd) { return viewbox::r_internal; }
+
+    GLFWmonitor* primary = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(primary);
+    ph.screen_half.x = mode->width / 2;
+    ph.screen_half.y = mode->height / 2;
+
+    pos = {posX, posY};
+    content_size = {sizeX, sizeY};
+
+    int f_left, f_top, f_right, f_bottom;
+    glfwGetWindowFrameSize(ph.hWnd, &f_left, &f_top, &f_right, &f_bottom);
+    ph.frame_size = {f_right - f_left, f_bottom - f_top};
+    size = {ph.frame_size.x + content_size.x, ph.frame_size.y + content_size.y};
+
+    ph.lt_pos = pos_to_ltpos(pos, content_size, ph.screen_half);
+    ph.state.set(wnd_state::d_size);
 
     glfwSetWindowUserPointer(ph.hWnd, _ph);
     glfwSetKeyCallback(ph.hWnd, key_callback);
@@ -143,6 +221,10 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
     // glfwSetCursorEnterCallback(ph.hWnd, cursor_enter_callback);
     glfwSetCursorPosCallback(ph.hWnd, cursor_pos_callback);
     glfwSetScrollCallback(ph.hWnd, wheel_callback);
+
+    glfwSetWindowPosCallback(ph.hWnd, window_pos_callback);
+    glfwSetWindowSizeCallback(ph.hWnd, window_size_callback);
+    glfwSetWindowFocusCallback(ph.hWnd, window_focus_callback);
 
     __glfw.register_wnd(this);
 
@@ -159,6 +241,21 @@ viewbox::result viewbox::process_loop()
     ph.evts().mouse.clear();
 
     __glfw.poll_events();
+
+    if (ph.state.test(wnd_state::d_size) || ph.state.test(wnd_state::d_pos))
+    {
+        glfwSetWindowSize(ph.hWnd, content_size.x, content_size.y);
+        glfwSetWindowPos(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y);
+        ph.state.reset(wnd_state::d_size);
+        ph.state.reset(wnd_state::d_pos);
+    }
+
+    if (ph.state.test(wnd_state::d_title))
+    {
+        glfwSetWindowTitle(ph.hWnd, text_title.c_str());
+        ph.evts().push_evts(viewbox_evt::title);
+        ph.state.reset(wnd_state::d_title);
+    }
 
     if (glfwWindowShouldClose(ph.hWnd))
     {
@@ -183,8 +280,6 @@ YKM_VIEWBOX_RESULT viewbox::set_title(const char* title)
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    glfwSetWindowTitle(ph.hWnd, title);
-
     text_title = title;
     ph.state.set(wnd_state::d_title);
     return r_ok;
@@ -194,9 +289,10 @@ YKM_VIEWBOX_RESULT viewbox::set_pos(int x, int y)
 {
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
-    pos.x = x;
-    pos.y = y;
-    ph.state.set(wnd_state::d_pos);
+
+    pos = {x, y};
+    ph.lt_pos = pos_to_ltpos(pos, ph.size(), ph.screen_half);
+
     return r_ok;
 }
 
@@ -205,9 +301,18 @@ YKM_VIEWBOX_RESULT viewbox::set_size(int x, int y)
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    size.x = x;
-    size.y = y;
-    ph.state.set(wnd_state::d_pos);
+    content_size = {
+        x - ph.frame_size.x,
+        y - ph.frame_size.y,
+    };
+    size = {x, y};
+
+    ph.lt_pos = pos_to_ltpos(pos, content_size, ph.screen_half);
+
+    ph.state.set(wnd_state::d_size);
+    glfwSetWindowSize(ph.hWnd, content_size.x, content_size.y);
+    glfwSetWindowPos(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y);
+
     return r_ok;
 }
 
@@ -216,14 +321,16 @@ YKM_VIEWBOX_RESULT viewbox::set_content_size(int x, int y)
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    content_size.x = x;
-    content_size.y = y;
+    size = {
+        x + ph.frame_size.x,
+        y + ph.frame_size.y,
+    };
+    content_size = {x, y};
 
-    // AdjustWindowRect(&r, ph->style, FALSE);
+    ph.lt_pos = pos_to_ltpos(pos, content_size, ph.screen_half);
 
-    // size.x = r.right - r.left;
-    // size.y = r.bottom - r.top;
-    ph.state.set(wnd_state::d_pos);
+    ph.state.set(wnd_state::d_size);
+
     return r_ok;
 }
 

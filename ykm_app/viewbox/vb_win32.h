@@ -59,6 +59,8 @@ struct win32_plat_h : ykm::viewbox::implbase
     }
 };
 
+#define YKM_VIEWBOX_PH(_ph) ((::ykm::viewbox_internal::win32_plat_h*)_ph)
+
 } // namespace viewbox_internal
 } // namespace ykm
 

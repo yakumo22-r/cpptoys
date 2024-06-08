@@ -16,9 +16,7 @@ namespace ykm
 enum class wnd_state : uint32_t
 {
     // clang-format off
-    active, alive, zoomd,
-
-    d_title, d_size, d_pos,
+    d_title,d_size,d_pos,
     // clang-format on
     state_num
 };
@@ -33,6 +31,7 @@ struct glfw_plat_h : ykm::viewbox::implbase
     std::string last_err;   // error info
     viewbox_xy screen_half; // main screen half size
     viewbox_xy lt_pos;      // window position in win32 system coordinate system
+    viewbox_xy frame_size;      // window position in win32 system coordinate system
 
     using state_t = ykm::enum_set<wnd_state, (uint32_t)wnd_state::state_num>;
     // window state

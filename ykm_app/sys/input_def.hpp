@@ -110,7 +110,7 @@ struct istate
         curr.reset();
     };
 
-    const buf_arr& buf_press() const { return buf_p; }
+    const buf_arr& buf_enterd() const { return buf_p; }
     const buf_arr& buf_release() const { return buf_r; }
 
   private:
@@ -130,7 +130,7 @@ struct touch
 };
 
 // clang-format off
-#define YKM_APP_SYS_MOUSECODE_ELEM(MACRO)\
+#define YKM_APP_SYS_MOUSE_EVT_ELEM(MACRO)\
     MACRO##_EI_(left       , 1  )\
     MACRO##_EI_(right      , 2  )\
     MACRO##_EI_(middle     , 3  )\
@@ -152,14 +152,14 @@ struct touch
 
 // clang-format on
 
-enum class mousecode : uint8_t
+enum class mouse_evt : uint8_t
 {
-    YKM_ENUM_DEFINE(YKM_APP_SYS_MOUSECODE_ELEM) none,
+    YKM_ENUM_DEFINE(YKM_APP_SYS_MOUSE_EVT_ELEM) none,
 };
 
-extern const ykm::enum_map<mousecode, 16> mousecode_map;
+extern const ykm::enum_map<mouse_evt, 16> mouse_evt_map;
 
-struct mouse : istate<mousecode, 16, 8>
+struct mouse : istate<mouse_evt, 16, 8>
 {
   public:
     int32_t x() const { return _x; }
@@ -167,6 +167,9 @@ struct mouse : istate<mousecode, 16, 8>
 
     int32_t y() const { return _y; }
     int32_t& y() { return _y; }
+
+    void push_scroll_evt() { press(mouse_evt::scroll); }
+    void push_move_evt() { press(mouse_evt::move); }
 
     int32_t scroll() const { return _scroll_y; }
     int32_t& scroll() { return _scroll_y; }

@@ -1,9 +1,6 @@
 #include <exception>
 #include <iostream>
 
-#include <chrono>
-#include <thread>
-
 #include <fmt/format.h>
 
 #include <ykm_app_viewbox.h>
@@ -18,23 +15,33 @@ int main()
         vb.set_content_size(800, 600);
         vb.show();
 
+        fmt::println("start");
         int code = 0;
         ykm::frame_delay FD;
+        FD.set_fps(2);
+        uint32_t frame = 0;
         while (!code)
         {
+            fmt::println("\nframe {}", frame++);
             FD.frame_begin();
-            auto frame_time = std::chrono::system_clock::now();
-            for (auto mc : vb.event().mouse.buf_press())
+
+            code = vb.process_loop();
+
+            for (auto evt : vb.event().mouse.buf_enterd())
             {
-                if (mc == ykm::input::mousecode::move)
+                if (evt == ykm::input::mouse_evt::move) //
                 {
-                    fmt::println("move {} {}", vb.event().mouse.x(), vb.event().mouse.y()); //
+                    fmt::println("move {} {}", vb.event().mouse.x(), vb.event().mouse.y());
                 }
-                else{
-                    fmt::println("mouse btn {}",ykm::input::mousecode_map[mc]);
+                else if (evt == ykm::input::mouse_evt::scroll) //
+                {
+                    fmt::println("scroll {} {}", vb.event().mouse.scroll_x(), vb.event().mouse.scroll_y());
+                }
+                else //
+                {
+                    fmt::println("mouse btn {}", ykm::input::mouse_evt_map[evt]);
                 }
             }
-            code = vb.process_loop();
 
             FD.frame_end();
         }

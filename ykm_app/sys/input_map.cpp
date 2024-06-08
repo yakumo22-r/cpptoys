@@ -4,9 +4,9 @@ namespace ykm::input
 {
 
 #undef YKM_ENUM_MAP_NS
-#define YKM_ENUM_MAP_NS mousecode
-const ykm::enum_map<mousecode, 16>
-    mousecode_map(YKM_ENUM_MAP_BUILD(YKM_APP_SYS_MOUSECODE_ELEM, none));
+#define YKM_ENUM_MAP_NS mouse_evt
+const ykm::enum_map<mouse_evt, 16>
+    mouse_evt_map(YKM_ENUM_MAP_BUILD(YKM_APP_SYS_MOUSE_EVT_ELEM, none));
 
 #undef YKM_ENUM_MAP_NS
 #define YKM_ENUM_MAP_NS keycode

@@ -30,7 +30,16 @@ struct viewbox final
     struct implbase;
     friend implbase;
 
-    viewbox() : _ph(nullptr) {}
+    viewbox()
+        :     //
+          evts(),
+          size(),
+          content_size(),
+          pos(),
+          text_title(),
+          _ph(nullptr)
+    {
+    }
 
     // These functions that macros return values will be implemented in other files
 
@@ -61,8 +70,7 @@ struct viewbox final
 
     ~viewbox()
     {
-        if (_ph)
-            destory();
+        if (_ph) destory();
     }
 
   private:
