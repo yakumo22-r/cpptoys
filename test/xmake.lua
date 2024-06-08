@@ -28,6 +28,7 @@ target("test_async")
 
 target("vbox")
     add_includedirs("../headonly")
+    add_packages("fmt")
     if is_plat("macosx") then
         add_defines("YKM_VIEWBOX_GLFW")
         add_deps("ykm_viewbox",{ykm_viewbox_glfw=true,ykm_viewbox_debug=true})

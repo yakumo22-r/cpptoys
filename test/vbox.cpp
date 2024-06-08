@@ -1,7 +1,13 @@
 #include <exception>
 #include <iostream>
 
+#include <chrono>
+#include <thread>
+
+#include <fmt/format.h>
+
 #include <ykm_app_viewbox.h>
+#include <ykm/frame_delay.hpp>
 
 int main()
 {
@@ -13,13 +19,24 @@ int main()
         vb.show();
 
         int code = 0;
+        ykm::frame_delay FD;
         while (!code)
         {
-            //for (auto kc : vb.event().keyboard.buf_press())
-            //{
-            //    std::cout << std::format("press {} {}", ykm::input::keycode_map[kc], size_t(kc)) << std::endl;
-            //}
+            FD.frame_begin();
+            auto frame_time = std::chrono::system_clock::now();
+            for (auto mc : vb.event().mouse.buf_press())
+            {
+                if (mc == ykm::input::mousecode::move)
+                {
+                    fmt::println("move {} {}", vb.event().mouse.x(), vb.event().mouse.y()); //
+                }
+                else{
+                    fmt::println("mouse btn {}",ykm::input::mousecode_map[mc]);
+                }
+            }
             code = vb.process_loop();
+
+            FD.frame_end();
         }
 
         std::cout << code << vb.get_internal_errinfo() << std::endl;

@@ -31,8 +31,11 @@ struct glfw_global
 
     void poll_events()
     {
-        if (process_count == 0) { glfwPollEvents(); }
-        process_count = (process_count + 1) % all_wnds.size();
+        if (++process_count >= all_wnds.size())
+        {
+            glfwPollEvents();
+            process_count = 0;
+        }
     }
 
     operator bool() { return init_result; }
@@ -78,9 +81,48 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
     auto user_pointer = glfwGetWindowUserPointer(window);
     if (!user_pointer) return;
-
     auto& ph = *YKM_VIEWBOX_PH(user_pointer);
-    ykm_log("key evt {} {}", input::keycode_map[input::kc_by_sc(scancode)], scancode);
+
+    if (action == GLFW_PRESS)
+        ph.evts().keyboard.press(input::kc_by_sc(scancode));
+    else
+        ph.evts().keyboard.release(input::kc_by_sc(scancode));
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    auto user_pointer = glfwGetWindowUserPointer(window);
+    if (!user_pointer) return;
+    auto& ph = *YKM_VIEWBOX_PH(user_pointer);
+
+    if (action == GLFW_PRESS)
+        ph.evts().mouse.press(input::mousecode(button+1));
+    else
+        ph.evts().mouse.release(input::mousecode(button+1));
+}
+
+void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    auto user_pointer = glfwGetWindowUserPointer(window);
+    if (!user_pointer) return;
+    auto& ph = *YKM_VIEWBOX_PH(user_pointer);
+
+    // ykm_log("{} mouse move {} {}", ph.vb->title(), xpos,ypos);
+    ph.evts().mouse.x() = (int)xpos;
+    ph.evts().mouse.y() = (int)ypos;
+    ph.evts().mouse.press(input::mousecode::move);
+}
+
+void wheel_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    auto user_pointer = glfwGetWindowUserPointer(window);
+    if (!user_pointer) return;
+    auto& ph = *YKM_VIEWBOX_PH(user_pointer);
+
+    ph.evts().mouse.press(input::mousecode::scroll);
+    ph.evts().mouse.scroll_x() = (int)(xoffset * 1000);
+    ph.evts().mouse.scroll_y() = (int)(yoffset * 1000);
+    ykm_log("{} wheel {} {}", ph.vb->title(), xoffset, yoffset);
 }
 
 viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title)
@@ -97,6 +139,10 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
 
     glfwSetWindowUserPointer(ph.hWnd, _ph);
     glfwSetKeyCallback(ph.hWnd, key_callback);
+    glfwSetMouseButtonCallback(ph.hWnd, mouse_button_callback);
+    // glfwSetCursorEnterCallback(ph.hWnd, cursor_enter_callback);
+    glfwSetCursorPosCallback(ph.hWnd, cursor_pos_callback);
+    glfwSetScrollCallback(ph.hWnd, wheel_callback);
 
     __glfw.register_wnd(this);
 
@@ -107,6 +153,10 @@ viewbox::result viewbox::process_loop()
 {
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
+
+    ph.evts().clear_evts();
+    ph.evts().keyboard.next_frame();
+    ph.evts().mouse.clear();
 
     __glfw.poll_events();
 

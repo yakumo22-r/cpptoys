@@ -130,7 +130,7 @@ struct touch
 };
 
 // clang-format off
-#define YKM_APP_SYS_BTNCODE_ELEM(MACRO)\
+#define YKM_APP_SYS_MOUSECODE_ELEM(MACRO)\
     MACRO##_EI_(left       , 1  )\
     MACRO##_EI_(right      , 2  )\
     MACRO##_EI_(middle     , 3  )\
@@ -147,19 +147,19 @@ struct touch
     MACRO##_EI_(mouse11    , 11 )\
     MACRO##_EI_(mouse12    , 12 )\
     MACRO##_EI_(mouse13    , 13 )\
-    MACRO##_EI_(mouse14    , 14 )\
-    MACRO##_EI_(mouse15    , 15 )
+    MACRO##_EI_(scroll     , 14 )\
+    MACRO##_EI_(move       , 15 )
 
 // clang-format on
 
-enum class btncode : uint8_t
+enum class mousecode : uint8_t
 {
-    YKM_ENUM_DEFINE(YKM_APP_SYS_BTNCODE_ELEM) none,
+    YKM_ENUM_DEFINE(YKM_APP_SYS_MOUSECODE_ELEM) none,
 };
 
-extern const ykm::enum_map<btncode, 16> btncode_map;
+extern const ykm::enum_map<mousecode, 16> mousecode_map;
 
-struct mouse : istate<btncode, 16, 8>
+struct mouse : istate<mousecode, 16, 8>
 {
   public:
     int32_t x() const { return _x; }
@@ -168,11 +168,25 @@ struct mouse : istate<btncode, 16, 8>
     int32_t y() const { return _y; }
     int32_t& y() { return _y; }
 
-    int32_t scroll() const { return _scroll; }
-    int32_t& scroll() { return _scroll; }
+    int32_t scroll() const { return _scroll_y; }
+    int32_t& scroll() { return _scroll_y; }
+
+    int32_t scroll_x() const { return _scroll_x; }
+    int32_t& scroll_x() { return _scroll_x; }
+
+    int32_t scroll_y() const { return _scroll_y; }
+    int32_t& scroll_y() { return _scroll_y; }
+
+    void clear()
+    {
+        _scroll_x = 0;
+        _scroll_y = 0;
+        next_frame();
+    }
 
   private:
-    int32_t _scroll;
+    int32_t _scroll_x;
+    int32_t _scroll_y;
     int32_t _x;
     int32_t _y;
 };
