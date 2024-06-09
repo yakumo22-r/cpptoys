@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <vector>
 
+using namespace ykm::app;
+
 struct glfw_global
 {
   public:
@@ -27,7 +29,8 @@ struct glfw_global
         glfwSetErrorCallback(error_callback);
         if (!init_result) //
             ykm_err("glfwInit code({})", init_result);
-        ykm_log("glfw init success");
+        else
+            ykm_log("glfw init success");
     }
 
     void poll_events()
@@ -126,25 +129,13 @@ void wheel_callback(GLFWwindow* window, double xoffset, double yoffset)
     ph.evts().mouse.scroll_y() = (int)(yoffset * 10);
 }
 
-inline viewbox_xy pos_to_ltpos(viewbox_xy pos, viewbox_xy size, viewbox_xy half_screen)
-{
-    return {pos.x + half_screen.x - (size.x / 2), //
-            half_screen.y - pos.y - (size.y / 2)};
-}
-
-inline viewbox_xy ltpos_to_pos(viewbox_xy lt_pos, viewbox_xy size, viewbox_xy half_screen)
-{
-    return {lt_pos.x - half_screen.x + (size.x / 2), //
-            half_screen.y + half_screen.y - (size.y / 2)};
-}
-
 void window_pos_callback(GLFWwindow* window, int x, int y)
 {
     auto user_pointer = glfwGetWindowUserPointer(window);
     if (!user_pointer) return;
     auto& ph = *YKM_VIEWBOX_PH(user_pointer);
 
-    auto pos = ltpos_to_pos({x, y}, ph.size(), ph.screen_half);
+    auto pos = ph.ltpos_2_pos({x, y});
 
     if (pos != ph.pos())
     {
@@ -160,7 +151,7 @@ void window_size_callback(GLFWwindow* window, int x, int y)
     if (!user_pointer) return;
     auto& ph = *YKM_VIEWBOX_PH(user_pointer);
 
-    auto pos = ltpos_to_pos({x, y}, ph.size(), ph.screen_half);
+    auto pos = ph.ltpos_2_pos({x, y});
 
     ph.evts().push_evts(viewbox_evt::resize);
     ph.content_size() = {x, y};
@@ -199,20 +190,31 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
 
     if (!ph.hWnd) { return viewbox::r_internal; }
 
+    {
+        int f_left, f_top, f_right, f_bottom;
+        glfwGetWindowFrameSize(ph.hWnd, &f_left, &f_top, &f_right, &f_bottom);
+
+        float wfs_w = f_right - f_left;
+        float wfs_h = f_bottom - f_top;
+
+        int fbs_w, fbs_h;
+        glfwGetFramebufferSize(ph.hWnd, &fbs_w, &fbs_h);
+
+        ph.pt_ratio = {fbs_w / wfs_w, fbs_h / wfs_h};
+        ph.frame_size = ph.pt2px({f_right - f_left, f_bottom - f_top});
+    }
+
+    size = {ph.frame_size.x + content_size.x, ph.frame_size.y + content_size.y};
+
     GLFWmonitor* primary = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primary);
-    ph.screen_half.x = mode->width / 2;
-    ph.screen_half.y = mode->height / 2;
+
+    ph.screen_half = ph.pt2px({mode->width / 2, mode->height / 2});
 
     pos = {posX, posY};
     content_size = {sizeX, sizeY};
 
-    int f_left, f_top, f_right, f_bottom;
-    glfwGetWindowFrameSize(ph.hWnd, &f_left, &f_top, &f_right, &f_bottom);
-    ph.frame_size = {f_right - f_left, f_bottom - f_top};
-    size = {ph.frame_size.x + content_size.x, ph.frame_size.y + content_size.y};
-
-    ph.lt_pos = pos_to_ltpos(pos, content_size, ph.screen_half);
+    ph.lt_pos = ph.pos_2_ltpos(pos);
     ph.state.set(wnd_state::d_size);
 
     glfwSetWindowUserPointer(ph.hWnd, _ph);
@@ -244,8 +246,10 @@ viewbox::result viewbox::process_loop()
 
     if (ph.state.test(wnd_state::d_size) || ph.state.test(wnd_state::d_pos))
     {
-        glfwSetWindowSize(ph.hWnd, content_size.x, content_size.y);
-        glfwSetWindowPos(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y);
+        auto v = ph.pt2px(content_size);
+        glfwSetWindowSize(ph.hWnd, v.x, v.y);
+        v = ph.pt2px(ph.lt_pos);
+        glfwSetWindowPos(ph.hWnd, v.x, v.y);
         ph.state.reset(wnd_state::d_size);
         ph.state.reset(wnd_state::d_pos);
     }
@@ -291,7 +295,7 @@ YKM_VIEWBOX_RESULT viewbox::set_pos(int x, int y)
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
     pos = {x, y};
-    ph.lt_pos = pos_to_ltpos(pos, ph.size(), ph.screen_half);
+    ph.lt_pos = ph.pos_2_ltpos(pos);
 
     return r_ok;
 }
@@ -307,11 +311,9 @@ YKM_VIEWBOX_RESULT viewbox::set_size(int x, int y)
     };
     size = {x, y};
 
-    ph.lt_pos = pos_to_ltpos(pos, content_size, ph.screen_half);
+    ph.lt_pos = ph.pos_2_ltpos(pos);
 
     ph.state.set(wnd_state::d_size);
-    glfwSetWindowSize(ph.hWnd, content_size.x, content_size.y);
-    glfwSetWindowPos(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y);
 
     return r_ok;
 }
@@ -327,7 +329,7 @@ YKM_VIEWBOX_RESULT viewbox::set_content_size(int x, int y)
     };
     content_size = {x, y};
 
-    ph.lt_pos = pos_to_ltpos(pos, content_size, ph.screen_half);
+    ph.lt_pos = ph.pos_2_ltpos(pos);
 
     ph.state.set(wnd_state::d_size);
 

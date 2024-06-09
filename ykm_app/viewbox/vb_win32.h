@@ -25,8 +25,8 @@ struct win32_plat_h : ykm::viewbox::implbase
     HWND hWnd;       // win api
     DWORD style;
     std::string last_err;   // error info
-    viewbox_xy screen_half; // main screen half size
-    viewbox_xy lt_pos;      // window position in win32 system coordinate system
+    i32_xy screen_half; // main screen half size
+    i32_xy lt_pos;      // window position in win32 system coordinate system
 
     // rewrite move & resize for window
     WPARAM rw_hithc;

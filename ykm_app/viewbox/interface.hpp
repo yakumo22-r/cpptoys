@@ -11,6 +11,9 @@ todo: text input and candicate
 #include <string>
 
 #include "event.hpp"
+
+#include "../utils/num.hpp"
+
 #define YKM_VIEWBOX_I(r) r
 #define YKM_VIEWBOX_RESULT ::ykm::viewbox::result
 #define YKM_VIEWBOX_VOID void
@@ -26,12 +29,13 @@ struct viewbox final
     inline static constexpr int16_t r_internal = -2;
 
     using result = int16_t;
+    using i32_xy = app::i32_xy;
 
     struct implbase;
     friend implbase;
 
     viewbox()
-        :     //
+        : //
           evts(),
           size(),
           content_size(),
@@ -61,7 +65,7 @@ struct viewbox final
     static YKM_VIEWBOX_VOID on_fatal_error(int code, const char* title, const char* what);
     // set get
     implbase* get_plat_h() { return _ph; }
-    viewbox_xy position() const { return pos; }
+    i32_xy position() const { return pos; }
     int32_t width() const { return size.x; }
     int32_t height() const { return size.y; }
 
@@ -75,19 +79,21 @@ struct viewbox final
 
   private:
     viewbox_evt evts;
-    viewbox_xy size;
-    viewbox_xy content_size;
-    viewbox_xy pos;
+    i32_xy size;
+    i32_xy content_size;
+    i32_xy pos;
     std::string text_title;
     implbase* _ph;
 
   public:
     struct implbase
     {
+        using i32_xy = app::i32_xy;
+        using f_xy = app::f_xy;
         viewbox_evt& evts() { return vb->evts; }
-        viewbox_xy& size() { return vb->size; }
-        viewbox_xy& content_size() { return vb->content_size; }
-        viewbox_xy& pos() { return vb->pos; }
+        i32_xy& size() { return vb->size; }
+        i32_xy& content_size() { return vb->content_size; }
+        i32_xy& pos() { return vb->pos; }
         std::string& title() { return vb->text_title; }
         viewbox* vb;
     };

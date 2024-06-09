@@ -15,6 +15,8 @@ TODO: text input with candicate
 
 #include "debug.hpp"
 
+using namespace ykm::app;
+
 namespace ykm
 {
 namespace viewbox_internal
@@ -239,10 +241,10 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
     if (YKM_VIEWBOX_PH(_ph)) destory();
     ykm_log("viewbox created - {} impl win32", title);
 
-    auto ph = new win32_plat_h();
-    _ph = ph;
-    ph->hInst = GetModuleHandle(nullptr);
-    ph->vb = this;
+    _ph = new win32_plat_h();
+    auto& ph = *YKM_VIEWBOX_PH(_ph);
+    ph.hInst = GetModuleHandle(nullptr);
+    ph.vb = this;
 
     static WNDCLASSEX wc = {0};
     static bool wc_reg = false;
@@ -254,7 +256,7 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
         wc.lpfnWndProc = HandleMsgSetup;
         wc.cbClsExtra = 0;
         wc.cbWndExtra = 0;
-        wc.hInstance = ph->hInst;
+        wc.hInstance = ph.hInst;
         wc.hIcon = nullptr;
         wc.hCursor = nullptr;
         wc.hbrBackground = nullptr;
@@ -276,29 +278,29 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
     evts.keyboard.next_frame();
     evts.mouse.next_frame();
 
-    ph->style = WS_OVERLAPPEDWINDOW;
+    ph.style = WS_OVERLAPPEDWINDOW;
 
-    ph->screen_half.x = GetSystemMetrics(SM_CXSCREEN) / 2;
-    ph->screen_half.y = GetSystemMetrics(SM_CYSCREEN) / 2;
+    ph.screen_half.x = GetSystemMetrics(SM_CXSCREEN) / 2;
+    ph.screen_half.y = GetSystemMetrics(SM_CYSCREEN) / 2;
 
-    ph->lt_pos.x = ph->screen_half.x + pos.x - size.x / 2;
-    ph->lt_pos.y = ph->screen_half.y - pos.y - size.y / 2;
-    ph->hWnd = CreateWindow(class_name, title, ph->style, ph->lt_pos.x, ph->lt_pos.y, size.x, size.y, nullptr, nullptr, ph->hInst, ph);
+    ph.lt_pos.x = ph.screen_half.x + pos.x - size.x / 2;
+    ph.lt_pos.y = ph.screen_half.y - pos.y - size.y / 2;
+    ph.hWnd = CreateWindow(class_name, title, ph.style, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, nullptr, nullptr, ph.hInst, _ph);
 
     // check window maximization status
-    if (IsZoomed(ph->hWnd)) { ph->state.set(win32_plat_h::zoomd); }
-    else { ph->state.reset(win32_plat_h::zoomd); }
+    if (IsZoomed(ph.hWnd)) { ph.state.set(win32_plat_h::zoomd); }
+    else { ph.state.reset(win32_plat_h::zoomd); }
 
     RECT rect;
-    GetClientRect(ph->hWnd, &rect);
+    GetClientRect(ph.hWnd, &rect);
     content_size.x = rect.right - rect.left;
     content_size.y = rect.bottom - rect.top;
 
-    if (ph->hWnd == nullptr)
+    if (ph.hWnd == nullptr)
     {
-        ph->GetErrInfo();
+        ph.GetErrInfo();
         destory();
-        // MessageBox(0, ph->last_err.c_str(), "ykm viewbox create error", MB_OK);
+        // MessageBox(0, ph.last_err.c_str(), "ykm viewbox create error", MB_OK);
         return r_internal;
     }
 
@@ -307,10 +309,11 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
 
 viewbox::result viewbox::process_loop()
 {
-    using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
+    if (!_ph) return r_uninitialized;
 
-    if (!ph) return r_uninitialized;
+    using namespace ::ykm::viewbox_internal;
+    auto ph = *YKM_VIEWBOX_PH(_ph);
+
 
     evts.clear_evts();
     evts.keyboard.next_frame();
@@ -318,18 +321,18 @@ viewbox::result viewbox::process_loop()
 
     MSG msg;
 
-    if (PeekMessage(&msg, ph->hWnd, 0, 0, PM_REMOVE) != 0)
+    if (PeekMessage(&msg, ph.hWnd, 0, 0, PM_REMOVE) != 0)
     {
         if (msg.message == WM_QUIT)
         {
-            ph->state.reset(win32_plat_h::alive);
+            ph.state.reset(win32_plat_h::alive);
             return r_quit;
         }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    auto& state = ph->state;
+    auto& state = ph.state;
 
     // window resize rewrite
     if (!state[win32_plat_h::zoomd] && state[win32_plat_h::rw_resizing] && (GetAsyncKeyState(VK_LBUTTON) & 0x8000))
@@ -342,76 +345,76 @@ viewbox::result viewbox::process_loop()
         state.set(win32_plat_h::d_pos);
         state.set(win32_plat_h::d_size);
 
-        switch (ph->rw_hithc)
+        switch (ph.rw_hithc)
         {
         case HTTOP:
-            deltaHeight = ph->rw_cursor.y - cursor.y;
+            deltaHeight = ph.rw_cursor.y - cursor.y;
             size.y += deltaHeight;
-            ph->lt_pos.y -= deltaHeight;
-            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
+            ph.lt_pos.y -= deltaHeight;
+            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
             break;
 
         case HTTOPRIGHT:
-            deltaWidth = cursor.x - ph->rw_cursor.x;
-            deltaHeight = ph->rw_cursor.y - cursor.y;
+            deltaWidth = cursor.x - ph.rw_cursor.x;
+            deltaHeight = ph.rw_cursor.y - cursor.y;
             size.x += deltaWidth;
             size.y += deltaHeight;
-            ph->lt_pos.y -= deltaHeight;
-            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
-            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
+            ph.lt_pos.y -= deltaHeight;
+            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
+            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
             break;
 
         case HTTOPLEFT:
-            deltaWidth = ph->rw_cursor.x - cursor.x;
-            deltaHeight = ph->rw_cursor.y - cursor.y;
+            deltaWidth = ph.rw_cursor.x - cursor.x;
+            deltaHeight = ph.rw_cursor.y - cursor.y;
             size.x += deltaWidth;
             size.y += deltaHeight;
-            ph->lt_pos.y -= deltaHeight;
-            ph->lt_pos.x -= deltaWidth;
-            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
-            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
+            ph.lt_pos.y -= deltaHeight;
+            ph.lt_pos.x -= deltaWidth;
+            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
+            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
             break;
 
         case HTRIGHT:
-            deltaWidth = cursor.x - ph->rw_cursor.x;
+            deltaWidth = cursor.x - ph.rw_cursor.x;
             size.x += deltaWidth;
-            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
+            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
             break;
 
         case HTLEFT:
-            deltaWidth = ph->rw_cursor.x - cursor.x;
+            deltaWidth = ph.rw_cursor.x - cursor.x;
             size.x += deltaWidth;
-            ph->lt_pos.x -= deltaWidth;
-            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
+            ph.lt_pos.x -= deltaWidth;
+            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
             break;
 
         case HTBOTTOMRIGHT:
-            deltaWidth = cursor.x - ph->rw_cursor.x;
-            deltaHeight = cursor.y - ph->rw_cursor.y;
+            deltaWidth = cursor.x - ph.rw_cursor.x;
+            deltaHeight = cursor.y - ph.rw_cursor.y;
             size.x += deltaWidth;
             size.y += deltaHeight;
-            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
-            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
+            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
+            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
             break;
 
         case HTBOTTOMLEFT:
-            deltaWidth = ph->rw_cursor.x - cursor.x;
-            deltaHeight = cursor.y - ph->rw_cursor.y;
+            deltaWidth = ph.rw_cursor.x - cursor.x;
+            deltaHeight = cursor.y - ph.rw_cursor.y;
             size.x += deltaWidth;
             size.y += deltaHeight;
-            ph->lt_pos.x -= deltaWidth;
-            pos.x = ph->lt_pos.x + size.x / 2 - ph->screen_half.x;
-            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
+            ph.lt_pos.x -= deltaWidth;
+            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
+            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
             break;
 
         case HTBOTTOM:
-            deltaHeight = cursor.y - ph->rw_cursor.y;
+            deltaHeight = cursor.y - ph.rw_cursor.y;
             size.y += deltaHeight;
-            pos.y = -(ph->lt_pos.y + size.y / 2 - ph->screen_half.y);
+            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
             break;
         }
 
-        ph->rw_cursor = cursor;
+        ph.rw_cursor = cursor;
     }
     else { state.reset(win32_plat_h::rw_resizing); }
 
@@ -422,9 +425,9 @@ viewbox::result viewbox::process_loop()
         GetCursorPos(&cursor);
 
         state.set(win32_plat_h::d_pos);
-        pos.x += cursor.x - ph->rw_cursor.x;
-        pos.y -= cursor.y - ph->rw_cursor.y;
-        ph->rw_cursor = cursor;
+        pos.x += cursor.x - ph.rw_cursor.x;
+        pos.y -= cursor.y - ph.rw_cursor.y;
+        ph.rw_cursor = cursor;
     }
     else { state.reset(win32_plat_h::rw_moving); }
 
@@ -432,20 +435,20 @@ viewbox::result viewbox::process_loop()
     if (state[win32_plat_h::d_pos] || state[win32_plat_h::d_size])
     {
 
-        viewbox_xy n_xy;
-        n_xy.x = ph->screen_half.x + pos.x - size.x / 2;
-        n_xy.y = ph->screen_half.y - pos.y - size.y / 2;
+        i32_xy n_xy;
+        n_xy.x = ph.screen_half.x + pos.x - size.x / 2;
+        n_xy.y = ph.screen_half.y - pos.y - size.y / 2;
 
-        ::MoveWindow(ph->hWnd, n_xy.x, n_xy.y, size.x, size.y, true);
+        ::MoveWindow(ph.hWnd, n_xy.x, n_xy.y, size.x, size.y, true);
 
-        if (n_xy != ph->lt_pos)
+        if (n_xy != ph.lt_pos)
         {
-            ph->lt_pos = n_xy;
+            ph.lt_pos = n_xy;
             evts.push_evts(viewbox_evt::move);
         }
 
         RECT rect;
-        GetClientRect(ph->hWnd, &rect);
+        GetClientRect(ph.hWnd, &rect);
         n_xy.x = rect.right - rect.left;
         n_xy.y = rect.bottom - rect.top;
         if (content_size != n_xy)
@@ -460,7 +463,7 @@ viewbox::result viewbox::process_loop()
 
     if (state[win32_plat_h::d_title])
     {
-        ::SetWindowText(ph->hWnd, text_title.c_str());
+        ::SetWindowText(ph.hWnd, text_title.c_str());
         state.reset(win32_plat_h::d_title);
         evts.push_evts(viewbox_evt::title);
     }
@@ -470,53 +473,53 @@ viewbox::result viewbox::process_loop()
 
 YKM_VIEWBOX_RESULT viewbox::show()
 {
+    if (!_ph) return r_uninitialized;
     using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
-    if (!ph) return r_uninitialized;
+    auto ph = *YKM_VIEWBOX_PH(_ph);
 
     evts.push_evts(viewbox_evt::awake);
-    ::ShowWindow(ph->hWnd, SW_SHOW);
+    ::ShowWindow(ph.hWnd, SW_SHOW);
     return r_ok;
 }
 
 YKM_VIEWBOX_RESULT viewbox::set_title(const char* title)
 {
+    if (!_ph) return r_uninitialized;
     using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
-    if (!ph) return r_uninitialized;
+    auto ph = *YKM_VIEWBOX_PH(_ph);
 
     text_title = title;
-    ph->state.set(win32_plat_h::d_title);
+    ph.state.set(win32_plat_h::d_title);
     return r_ok;
 }
 
 YKM_VIEWBOX_RESULT viewbox::set_pos(int x, int y)
 {
+    if (!_ph) return r_uninitialized;
     using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
-    if (!ph) return r_uninitialized;
+    auto ph = *YKM_VIEWBOX_PH(_ph);
     pos.x = x;
     pos.y = y;
-    ph->state.set(win32_plat_h::d_pos);
+    ph.state.set(win32_plat_h::d_pos);
     return r_ok;
 }
 
 YKM_VIEWBOX_RESULT viewbox::set_size(int x, int y)
 {
+    if (!_ph) return r_uninitialized;
     using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
-    if (!ph) return r_uninitialized;
+    auto ph = *YKM_VIEWBOX_PH(_ph);
     size.x = x;
     size.y = y;
-    ph->state.set(win32_plat_h::d_size);
+    ph.state.set(win32_plat_h::d_size);
     return r_ok;
 }
 
 YKM_VIEWBOX_RESULT viewbox::set_content_size(int x, int y)
 {
+    if (!_ph) return r_uninitialized;
     using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
-    if (!ph) return r_uninitialized;
+    auto ph = *YKM_VIEWBOX_PH(_ph);
 
     RECT r;
     r.top = 0;
@@ -526,28 +529,30 @@ YKM_VIEWBOX_RESULT viewbox::set_content_size(int x, int y)
     content_size.x = x;
     content_size.y = y;
 
-    AdjustWindowRect(&r, ph->style, FALSE);
+    AdjustWindowRect(&r, ph.style, FALSE);
 
     size.x = r.right - r.left;
     size.y = r.bottom - r.top;
-    ph->state.set(win32_plat_h::d_size);
+    ph.state.set(win32_plat_h::d_size);
     return r_ok;
 }
 
 YKM_VIEWBOX_RESULT viewbox::hide()
 {
     using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
-    if (!ph) return r_uninitialized;
+
+    if (!_ph) return r_uninitialized;
+    auto ph = *YKM_VIEWBOX_PH(_ph);
 
     evts.push_evts(viewbox_evt::sleep);
-    ::ShowWindow(ph->hWnd, SW_MINIMIZE);
+    ::ShowWindow(ph.hWnd, SW_MINIMIZE);
     return r_ok;
 }
 
 YKM_VIEWBOX_VOID viewbox::destory()
 {
     using namespace ::ykm::viewbox_internal;
+
     ::DestroyWindow(YKM_VIEWBOX_PH(_ph)->hWnd);
     delete YKM_VIEWBOX_PH(_ph);
     _ph = nullptr;
@@ -556,8 +561,9 @@ YKM_VIEWBOX_VOID viewbox::destory()
 YKM_VIEWBOX_I(std::string) viewbox::get_internal_errinfo() const
 {
     using namespace ::ykm::viewbox_internal;
-    auto ph = YKM_VIEWBOX_PH(_ph);
-    return ph ? ph->last_err : "view box impl uninitialized";
+
+    auto ph = *YKM_VIEWBOX_PH(_ph);
+    return _ph ? YKM_VIEWBOX_PH(_ph)->last_err : "view box impl uninitialized";
 }
 
 YKM_VIEWBOX_VOID viewbox::on_fatal_error(int code, const char* title, const char* what) { MessageBox(0, what, title, MB_OK); }
