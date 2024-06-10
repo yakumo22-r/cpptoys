@@ -7,9 +7,7 @@
 #include "debug.hpp"
 #include "event.hpp"
 #include <../sys/input_def.hpp>
-#include <memory>
 #include <unordered_set>
-#include <vector>
 
 using namespace ykm::app;
 
@@ -28,19 +26,23 @@ struct glfw_global
     {
         glfwSetErrorCallback(error_callback);
         if (!init_result) //
+        {
             ykm_err("glfwInit code({})", init_result);
-        else
+        }
+        else //
+        {
             ykm_log("glfw init success");
+        }
     }
 
     void poll_events()
     {
-        process_count++;
-        if (process_count >= all_wnds.size())
+        if (process_count == 0 || process_count >= all_wnds.size())
         {
             glfwPollEvents();
             process_count = 0;
         }
+        process_count++;
     }
 
     operator bool() { return init_result; }
@@ -135,14 +137,10 @@ void window_pos_callback(GLFWwindow* window, int x, int y)
     if (!user_pointer) return;
     auto& ph = *YKM_VIEWBOX_PH(user_pointer);
 
-    auto pos = ph.ltpos_2_pos({x, y});
+    ph.ca_pos = ph.ltpos_2_pos({x, y});
+    ph.lt_pos = {x, y};
 
-    if (pos != ph.pos())
-    {
-        ph.evts().push_evts(viewbox_evt::move);
-        ph.pos() = pos;
-        ykm_log("{} pos {} {}", ph.title(), pos.x, pos.y);
-    }
+    ph.state.set(wnd_state::d_size_pos);
 }
 
 void window_size_callback(GLFWwindow* window, int x, int y)
@@ -151,14 +149,18 @@ void window_size_callback(GLFWwindow* window, int x, int y)
     if (!user_pointer) return;
     auto& ph = *YKM_VIEWBOX_PH(user_pointer);
 
-    auto pos = ph.ltpos_2_pos({x, y});
+    auto v = ph.pt2px({x, y});
 
-    ph.evts().push_evts(viewbox_evt::resize);
-    ph.content_size() = {x, y};
+    ph.ca_content_size = v;
+    ph.ca_size = {ph.frame_size.x + v.x, ph.frame_size.y + v.y};
 
-    ph.size() = {ph.frame_size.x + x, ph.frame_size.y + y};
+    int px, py;
+    glfwGetWindowPos(ph.hWnd, &px, &py);
 
-    ykm_log("{} resize {} {}", ph.title(), ph.content_size().x, ph.content_size().y);
+    v = {px, py};
+    ph.ca_pos = ph.ltpos_2_pos(v);
+
+    ph.state.set(wnd_state::d_size_pos);
 }
 
 void window_focus_callback(GLFWwindow* window, int focusd)
@@ -186,21 +188,23 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
     ph.vb = this;
     ph.hWnd = nullptr;
 
-    ph.hWnd = glfwCreateWindow(sizeX, sizeY, title, nullptr, nullptr);
-
+    ph.hWnd = glfwCreateWindow(100, 100, title, nullptr, nullptr);
     if (!ph.hWnd) { return viewbox::r_internal; }
+
+    glfwHideWindow(ph.hWnd);
+    ph.state.reset(wnd_state::show);
 
     {
         int f_left, f_top, f_right, f_bottom;
         glfwGetWindowFrameSize(ph.hWnd, &f_left, &f_top, &f_right, &f_bottom);
 
-        float wfs_w = f_right - f_left;
-        float wfs_h = f_bottom - f_top;
+        int ws_w, ws_h;
+        glfwGetWindowSize(ph.hWnd, &ws_w, &ws_h);
 
         int fbs_w, fbs_h;
         glfwGetFramebufferSize(ph.hWnd, &fbs_w, &fbs_h);
 
-        ph.pt_ratio = {fbs_w / wfs_w, fbs_h / wfs_h};
+        ph.pt_ratio = {fbs_w / (float)ws_w, fbs_h / (float)ws_h};
         ph.frame_size = ph.pt2px({f_right - f_left, f_bottom - f_top});
     }
 
@@ -214,8 +218,12 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
     pos = {posX, posY};
     content_size = {sizeX, sizeY};
 
-    ph.lt_pos = ph.pos_2_ltpos(pos);
-    ph.state.set(wnd_state::d_size);
+    auto v = ph.pos_2_ltpos(pos);
+    glfwSetWindowPos(ph.hWnd, v.x, v.y);
+    ph.lt_pos = v;
+
+    v = ph.px2pt(content_size);
+    glfwSetWindowSize(ph.hWnd, v.x, v.y);
 
     glfwSetWindowUserPointer(ph.hWnd, _ph);
     glfwSetKeyCallback(ph.hWnd, key_callback);
@@ -244,21 +252,61 @@ viewbox::result viewbox::process_loop()
 
     __glfw.poll_events();
 
-    if (ph.state.test(wnd_state::d_size) || ph.state.test(wnd_state::d_pos))
+    if (ph.state[wnd_state::d_size_pos])
     {
-        auto v = ph.pt2px(content_size);
-        glfwSetWindowSize(ph.hWnd, v.x, v.y);
-        v = ph.pt2px(ph.lt_pos);
-        glfwSetWindowPos(ph.hWnd, v.x, v.y);
-        ph.state.reset(wnd_state::d_size);
-        ph.state.reset(wnd_state::d_pos);
+        auto content_size = this->content_size;
+        this->content_size = ph.ca_content_size;
+
+        if (pos != ph.ca_pos)
+        {
+            evts.push_evts(viewbox_evt::move);
+            pos = ph.ca_pos;
+        }
+
+        auto v = ph.pos_2_ltpos(pos);
+        if (ph.lt_pos != v)
+        {
+            glfwSetWindowPos(ph.hWnd, v.x, v.y);
+            ph.lt_pos = v;
+        }
+
+        if (this->content_size != content_size)
+        {
+            evts.push_evts(viewbox_evt::resize);
+            size = ph.ca_size;
+
+            auto v = ph.px2pt(this->content_size);
+
+            glfwSetWindowSize(ph.hWnd, v.x, v.y);
+        }
+
+        ykm_log("d_size");
+        ph.state.reset(wnd_state::d_size_pos);
     }
 
     if (ph.state.test(wnd_state::d_title))
     {
+        text_title = ph.ca_title;
         glfwSetWindowTitle(ph.hWnd, text_title.c_str());
-        ph.evts().push_evts(viewbox_evt::title);
+        evts.push_evts(viewbox_evt::title);
         ph.state.reset(wnd_state::d_title);
+    }
+
+    if (ph.state[wnd_state::d_show])
+    {
+        if (ph.state[wnd_state::ca_show])
+        {
+            glfwShowWindow(ph.hWnd);
+            evts.push_evts(viewbox_evt::awake);
+            ph.state.set(wnd_state::show);
+        }
+        else
+        {
+            glfwHideWindow(ph.hWnd);
+            evts.push_evts(viewbox_evt::sleep);
+            ph.state.reset(wnd_state::show);
+        }
+        ph.state.reset(wnd_state::d_show);
     }
 
     if (glfwWindowShouldClose(ph.hWnd))
@@ -274,8 +322,8 @@ viewbox::result viewbox::show()
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    evts.push_evts(viewbox_evt::awake);
-    glfwShowWindow(ph.hWnd);
+    ph.state.set(wnd_state::ca_show);
+    ph.state.set(wnd_state::d_show);
     return r_ok;
 }
 
@@ -284,8 +332,8 @@ YKM_VIEWBOX_RESULT viewbox::set_title(const char* title)
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    text_title = title;
-    ph.state.set(wnd_state::d_title);
+    ph.ca_title = title;
+    ph.state.set(wnd_state::d_size_pos);
     return r_ok;
 }
 
@@ -294,9 +342,7 @@ YKM_VIEWBOX_RESULT viewbox::set_pos(int x, int y)
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    pos = {x, y};
-    ph.lt_pos = ph.pos_2_ltpos(pos);
-
+    ph.ca_pos = {x, y};
     return r_ok;
 }
 
@@ -305,15 +351,13 @@ YKM_VIEWBOX_RESULT viewbox::set_size(int x, int y)
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    content_size = {
+    ph.ca_content_size = {
         x - ph.frame_size.x,
         y - ph.frame_size.y,
     };
-    size = {x, y};
+    ph.ca_size = {x, y};
 
-    ph.lt_pos = ph.pos_2_ltpos(pos);
-
-    ph.state.set(wnd_state::d_size);
+    ph.state.set(wnd_state::d_size_pos);
 
     return r_ok;
 }
@@ -323,15 +367,13 @@ YKM_VIEWBOX_RESULT viewbox::set_content_size(int x, int y)
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    size = {
+    ph.ca_size = {
         x + ph.frame_size.x,
         y + ph.frame_size.y,
     };
-    content_size = {x, y};
+    ph.ca_content_size = {x, y};
 
-    ph.lt_pos = ph.pos_2_ltpos(pos);
-
-    ph.state.set(wnd_state::d_size);
+    ph.state.set(wnd_state::d_size_pos);
 
     return r_ok;
 }
@@ -341,8 +383,8 @@ YKM_VIEWBOX_RESULT viewbox::hide()
     if (!_ph) return r_uninitialized;
     auto& ph = *YKM_VIEWBOX_PH(_ph);
 
-    evts.push_evts(viewbox_evt::sleep);
-    glfwHideWindow(ph.hWnd);
+    ph.state.reset(wnd_state::ca_show);
+    ph.state.set(wnd_state::d_show);
     return r_ok;
 }
 
