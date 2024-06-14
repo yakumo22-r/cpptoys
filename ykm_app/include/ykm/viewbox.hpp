@@ -19,7 +19,7 @@ todo: text input and candicate
 
 
 #include "app.hpp"
-YKM_APP_APP_HPP // include cpp version
+YKM_APP_APP_HPP; // include cpp version
 
 namespace ykm
 {

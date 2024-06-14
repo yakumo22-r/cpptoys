@@ -226,6 +226,7 @@ LRESULT ViewBox::PH::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
         return NULL;
 
     case WM_CLOSE:
+        evts().push_evts(ViewBoxEvt::close);
         PostQuitMessage(0);
     }
 

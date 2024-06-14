@@ -18,13 +18,16 @@ YkmApp_Result YkmApp_LoopSleep()
 }
 
 YKM_APP_CAPI
-YkmApp_Result YkmApp_HandleEvents()
+YkmApp_Result YkmApp_LoopHandleEvts()
 {
     MSG msg;
-    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    uint32_t count = 0;
+    while (count < ykm::appData.info.evtsHandlePerTick //
+           && PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+        ++count;
     }
     return YkmApp_R_Ok;
 }

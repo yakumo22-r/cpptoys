@@ -18,7 +18,7 @@
 
 typedef void* YkmApp_PH;
 
-typedef struct
+struct YkmApp_Info
 {
     YkmApp_PH _ph;
     const char* appName;
@@ -32,10 +32,10 @@ typedef struct
     long deltaTime;
 
     bool alive;
-} YkmApp_Info;
+};
 
 YKM_APP_CAPI
-YkmApp_Result YkmApp_GetInfo(YkmApp_Info** info);
+YkmApp_Result YkmApp_GetInfo(const YkmApp_Info** info);
 
 YKM_APP_CAPI
 YkmApp_Result YkmApp_SetName(const char* name);
@@ -60,7 +60,7 @@ YKM_APP_CAPI
 YkmApp_Result YkmApp_LoopSleep();
 
 YKM_APP_CAPI
-YkmApp_Result YkmApp_HandleEvents();
+YkmApp_Result YkmApp_LoopHandleEvts();
 
 YKM_APP_CAPI
 YkmApp_ErrBuffer YkmApp_GetLastErr();

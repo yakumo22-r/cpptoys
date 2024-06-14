@@ -4,7 +4,7 @@
 #include <fmt/format.h>
 
 YKM_APP_CAPI
-YkmApp_Result YkmApp_GetInfo(YkmApp_Info** info)
+YkmApp_Result YkmApp_GetInfo(const YkmApp_Info** info)
 {
     *info = &ykm::appData.info;
     return YkmApp_R_Ok;

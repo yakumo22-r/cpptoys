@@ -30,6 +30,7 @@ struct AppData
         info.time = 0;
         info.deltaTime = 0;
 
+        info.alive = true;
         update_time();
     }
 

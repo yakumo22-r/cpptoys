@@ -4,7 +4,6 @@
 #include <fmt/format.h>
 
 #include <ykm/viewbox.hpp>
-#include <ykm/frame_delay.hpp>
 
 int main()
 {
@@ -21,31 +20,38 @@ int main()
         fmt::println("start");
         int code = 0;
         uint32_t frame = 0;
-        while (!code)
-        {
-            // fmt::println("\nframe {}", frame++);
 
+        const YkmApp_Info* appInfo;
+        YkmApp_GetInfo(&appInfo);
+
+        while (appInfo->alive)
+        {
             check > vb.LoopBegin();
 
-            YkmApp_HandleEvents();
+            YkmApp_LoopHandleEvts();
 
             check > vb.LoopHandleEvts();
 
-            for (auto evt : vb.event().mouse.buf_enterd())
+            if (vb.event().on_close()) { YkmApp_Quit(); }
+            for (auto evt : vb.event().mouse.buf_entered())
             {
-                if (evt == ykm::input::mouse_evt::move) //
+                if (evt == ykm::input::mouse_evt::move)
                 {
-                    fmt::println("move {} {}", vb.event().mouse.x(), vb.event().mouse.y());
+                    //
+                    fmt::println("{} move {} {}", frame, vb.event().mouse.x(), vb.event().mouse.y());
                 }
-                else if (evt == ykm::input::mouse_evt::scroll) //
+                else if (evt == ykm::input::mouse_evt::scroll)
                 {
-                    fmt::println("scroll {} {}", vb.event().mouse.scroll_x(), vb.event().mouse.scroll_y());
+                    //
+                    fmt::println("{} scroll {} {}", frame, vb.event().mouse.scroll_x(), vb.event().mouse.scroll_y());
                 }
-                else //
+                else
                 {
-                    fmt::println("mouse btn {}", ykm::input::mouseEvtMap[evt]);
+                    //
+                    fmt::println("{} mouse btn {}", frame, ykm::input::mouseEvtMap[evt]);
                 }
             }
+            frame++;
             YkmApp_LoopSleep();
         }
 

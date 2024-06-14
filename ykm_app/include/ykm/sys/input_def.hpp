@@ -115,7 +115,7 @@ struct istate
         curr.reset();
     };
 
-    const buf_arr& buf_enterd() const { return buf_p; }
+    const buf_arr& buf_entered() const { return buf_p; }
     const buf_arr& buf_release() const { return buf_r; }
 
   private:

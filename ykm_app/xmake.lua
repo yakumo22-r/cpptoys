@@ -36,7 +36,7 @@ local function ykm_app_sys()
 end
 
 target("ykm_app")
-    ykm_app_proj("ykm_app","static")
+    ykm_app_proj("ykm_app_static","static")
 
     ykm_app_app()
     ykm_app_sys()
@@ -53,7 +53,7 @@ target("ykm_app_dylib")
     add_defines("YKM_SYS_SHARED_LIB",{public=true})
 
 target("ykm_app_app")
-    ykm_app_proj("ykm_app_app", "static")
+    ykm_app_proj("ykm_app_app_static", "static")
 
     ykm_app_app()
 
@@ -67,7 +67,7 @@ target("ykm_app_app_dylib")
 
 
 target("ykm_app_sys")
-    ykm_app_proj("ykm_app_sys", "static")
+    ykm_app_proj("ykm_app_sys_static", "static")
     add_deps("ykm_app_app")
 
     ykm_app_sys()
