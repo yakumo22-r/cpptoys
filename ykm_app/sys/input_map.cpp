@@ -7,10 +7,12 @@ namespace ykm::input
 
 #undef YKM_ENUM_MAP_NS
 #define YKM_ENUM_MAP_NS mouse_evt
+YKM_SYS_API
 const ykm::enum_map<mouse_evt, 16> mouseEvtMap(YKM_ENUM_MAP_BUILD(YKM_APP_SYS_MOUSE_EVT_ELEM, none));
 
 #undef YKM_ENUM_MAP_NS
 #define YKM_ENUM_MAP_NS keycode
+YKM_SYS_API
 const ykm::enum_map<keycode, 256> keyCodeMap(YKM_ENUM_MAP_BUILD(YKM_APP_SYS_KEYCODE_ELEM, none));
 
 } // namespace ykm::input

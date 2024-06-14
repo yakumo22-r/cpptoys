@@ -10,15 +10,15 @@
 #endif
 
 #ifdef _WIN32
-#define YKM_APP_EXPORT(R) __declspec(dllexport) R
+#define YKM_APP_EXPORT __declspec(dllexport)
 #else
-#define YKM_APP_EXPORT(R) __attribute__((visibility("default")))
+#define YKM_APP_EXPORT __attribute__((visibility("default")))
 #endif
 
 #ifdef _WIN32
-#define YKM_APP_IMPORT(R) __declspec(dllimport) R
+#define YKM_APP_IMPORT __declspec(dllimport)
 #else
-#define YKM_APP_IMPORT(R) R
+#define YKM_APP_IMPORT
 #endif
 //********* end of compile flags ************//
 //*******************************************//

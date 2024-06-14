@@ -24,7 +24,7 @@
 //*****************************************//
 //********** base system api 1.0 **********//
 
-typedef struct
+struct YkmSys_ScreenInfo
 {
     int x;
     int y;
@@ -38,8 +38,7 @@ typedef struct
     int dpiY;
 
     int id;
-
-} YkmSys_ScreenInfo;
+};
 
 YKM_SYS_CAPI
 YkmSys_ScreenInfo* YkmSys_GetScreenInfo(int* num);
@@ -63,14 +62,13 @@ typedef struct
 typedef int (*YkmSys_InputCodeParser)(const void*, const char*);
 typedef const char* (*YkmSys_InputCodeMapper)(const void*, int);
 
-typedef struct
+struct YkmSys_InputMap
 {
     int mapId;
     const void* _ph;
     YkmSys_InputCodeParser parser;
     YkmSys_InputCodeMapper mapper;
-
-} YkmSys_InputMap;
+};
 
 #define YKM_SYS_Input_MapId_Keycode 0
 #define YKM_SYS_Input_MapId_MouseEvt 1

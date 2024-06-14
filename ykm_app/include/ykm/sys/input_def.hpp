@@ -16,6 +16,7 @@ todo: abstract interaction
 
 #include <array>
 
+#include "../sys.h"
 #include "../utils/enum.hpp"
 
 namespace ykm::input
@@ -163,7 +164,7 @@ enum class mouse_evt : uint8_t
 {
     YKM_ENUM_DEFINE(YKM_APP_SYS_MOUSE_EVT_ELEM) none,
 };
-
+YKM_SYS_API
 extern const ykm::enum_map<mouse_evt, 16> mouseEvtMap;
 
 struct mouse : istate<mouse_evt, 16, 8>
@@ -324,6 +325,7 @@ enum class keycode : uint8_t
     YKM_ENUM_DEFINE(YKM_APP_SYS_KEYCODE_ELEM) none,
 };
 
+YKM_SYS_API
 extern const ykm::enum_map<keycode, 256> keyCodeMap;
 
 inline keycode kc_by_sc(int scancode)

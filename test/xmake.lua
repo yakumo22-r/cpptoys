@@ -33,7 +33,7 @@ target("vbox")
         add_defines("YKM_VIEWBOX_GLFW")
         add_deps("ykm_app",{ykm_viewbox_debug=true})
     else
-        add_deps("ykm_app")
+        add_deps("ykm_app_dylib")
     end
     set_targetdir("$(projectdir)/xmake-build")
     add_files("./vbox.cpp")
