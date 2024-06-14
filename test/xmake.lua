@@ -31,9 +31,9 @@ target("vbox")
     add_packages("fmt")
     if is_plat("macosx") then
         add_defines("YKM_VIEWBOX_GLFW")
-        add_deps("ykm_viewbox",{ykm_viewbox_glfw=true,ykm_viewbox_debug=true})
+        add_deps("ykm_app",{ykm_viewbox_debug=true})
     else
-        add_deps("ykm_viewbox")
+        add_deps("ykm_app")
     end
     set_targetdir("$(projectdir)/xmake-build")
     add_files("./vbox.cpp")

@@ -1,5 +1,5 @@
 /*
-   viewbox event defs
+   ViewBox event defs
 
     version: dev 0.0.1
     date : 2024/5/6
@@ -13,7 +13,7 @@
 namespace ykm
 {
 
-struct viewbox_evt
+struct ViewBoxEvt
 {
     enum evt : uint32_t
     {

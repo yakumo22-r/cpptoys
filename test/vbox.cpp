@@ -3,29 +3,33 @@
 
 #include <fmt/format.h>
 
-#include <ykm_app_viewbox.h>
+#include <ykm/viewbox.hpp>
 #include <ykm/frame_delay.hpp>
 
 int main()
 {
+    ykm::AppResultChecker check;
+    check.error_handler = [](YkmApp_Result code, const char* error) { fmt::println("error {} -> {}", code, error); };
+
     try
     {
-        ykm::viewbox vb;
-        vb.create(0, 0, 400, 400, "hello");
-        vb.set_content_size(800, 600);
-        vb.show();
+        ykm::ViewBox vb;
+        vb.Create(0, 0, 400, 400, "hello");
+        vb.SetContentSize(800, 600);
+        vb.Show();
 
         fmt::println("start");
         int code = 0;
-        ykm::frame_delay FD;
-        FD.set_fps(2);
         uint32_t frame = 0;
         while (!code)
         {
-            fmt::println("\nframe {}", frame++);
-            FD.frame_begin();
+            // fmt::println("\nframe {}", frame++);
 
-            code = vb.process_loop();
+            check > vb.LoopBegin();
+
+            YkmApp_HandleEvents();
+
+            check > vb.LoopHandleEvts();
 
             for (auto evt : vb.event().mouse.buf_enterd())
             {
@@ -39,15 +43,13 @@ int main()
                 }
                 else //
                 {
-                    fmt::println("mouse btn {}", ykm::input::mouse_evt_map[evt]);
+                    fmt::println("mouse btn {}", ykm::input::mouseEvtMap[evt]);
                 }
             }
-
-            FD.frame_end();
+            YkmApp_LoopSleep();
         }
 
-        std::cout << code << vb.get_internal_errinfo() << std::endl;
-        vb.destory();
+        vb.Destory();
     }
     catch (std::exception e)
     {

@@ -11,22 +11,35 @@
 
 #include <string>
 
-#include "interface.hpp"
+#include "ykm/viewbox.hpp"
 
 namespace ykm
 {
-namespace viewbox_internal
-{
 
 // impl
-struct win32_plat_h : ykm::viewbox::implbase
+struct ViewBox::PH : ViewBox::implbase
 {
     HINSTANCE hInst; // win api
     HWND hWnd;       // win api
     DWORD style;
-    std::string last_err;   // error info
-    i32_xy screen_half; // main screen half size
-    i32_xy lt_pos;      // window position in win32 system coordinate system
+    i32_xy screen_half;   // main screen half size
+    i32_xy lt_pos;        // window position in win32 system coordinate system
+
+    i32_xy ca_pos;
+    i32_xy ca_size;
+    i32_xy ca_content_size;
+
+    i32_xy ltpos_2_pos(i32_xy v)
+    {
+        return {v.x + size().x / 2 - screen_half.x, //
+                -(v.y + size().y / 2 - screen_half.y)};
+    };
+
+    i32_xy pos_2_ltpos(i32_xy v)
+    {
+        return {v.x + screen_half.x - size().x / 2, //
+                -v.y + screen_half.y - size().y / 2};
+    };
 
     // rewrite move & resize for window
     WPARAM rw_hithc;
@@ -39,10 +52,11 @@ struct win32_plat_h : ykm::viewbox::implbase
 
         active, alive, zoomd,
 
-        d_title, d_size, d_pos,
+        d_title, d_size_pos,
         // clang-format on
         state_num
     };
+
     using state_t = ykm::enum_set<wnd_state, state_num>;
     // window state
     state_t state;
@@ -59,9 +73,6 @@ struct win32_plat_h : ykm::viewbox::implbase
     }
 };
 
-#define YKM_VIEWBOX_PH(_ph) ((::ykm::viewbox_internal::win32_plat_h*)_ph)
-
-} // namespace viewbox_internal
 } // namespace ykm
 
 #endif

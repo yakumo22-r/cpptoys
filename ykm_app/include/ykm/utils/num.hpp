@@ -14,7 +14,7 @@ struct num_xy final
     T y;
 
     bool operator==(num_xy r) const { return x == r.x && y == r.y; }
-    bool operator!=(num_xy r) const { return x != r.x && y != r.y; }
+    bool operator!=(num_xy r) const { return x != r.x || y != r.y; }
 
     num_xy operator+(num_xy r) const { return {x + r.x, y + r.y}; }
     num_xy operator-(num_xy r) const { return {x - r.x, y - r.y}; }
@@ -41,7 +41,7 @@ struct num_xyz final
     T z;
 
     bool operator==(num_xyz r) const { return x == r.x && y == r.y && z == r.z; }
-    bool operator!=(num_xyz r) const { return x != r.x && y != r.y && z != r.z; }
+    bool operator!=(num_xyz r) const { return x != r.x || y != r.y || z != r.z; }
 
     num_xyz operator+(num_xyz r) const { return {x + r.x, y + r.y, z + r.z}; }
     num_xyz operator-(num_xyz r) const { return {x - r.x, y - r.y, z - r.z}; }

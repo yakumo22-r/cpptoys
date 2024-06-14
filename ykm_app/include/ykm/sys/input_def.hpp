@@ -15,10 +15,14 @@ todo: abstract interaction
 #include <cstring>
 
 #include <array>
-#include <ykm/enum.hpp>
+
+#include "../utils/enum.hpp"
 
 namespace ykm::input
 {
+
+//***********************************//
+//*********** base defs *************//
 
 enum state : uint8_t
 {
@@ -129,6 +133,9 @@ struct touch
     state s;
 };
 
+//*********** base defs *************//
+//***********************************//
+
 // clang-format off
 #define YKM_APP_SYS_MOUSE_EVT_ELEM(MACRO)\
     MACRO##_EI_(left       , 1  )\
@@ -157,7 +164,7 @@ enum class mouse_evt : uint8_t
     YKM_ENUM_DEFINE(YKM_APP_SYS_MOUSE_EVT_ELEM) none,
 };
 
-extern const ykm::enum_map<mouse_evt, 16> mouse_evt_map;
+extern const ykm::enum_map<mouse_evt, 16> mouseEvtMap;
 
 struct mouse : istate<mouse_evt, 16, 8>
 {
@@ -317,7 +324,7 @@ enum class keycode : uint8_t
     YKM_ENUM_DEFINE(YKM_APP_SYS_KEYCODE_ELEM) none,
 };
 
-extern const ykm::enum_map<keycode, 256> keycode_map;
+extern const ykm::enum_map<keycode, 256> keyCodeMap;
 
 inline keycode kc_by_sc(int scancode)
 {

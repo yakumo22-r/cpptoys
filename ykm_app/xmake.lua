@@ -6,10 +6,14 @@ option("ykm_viewbox_debug")
     set_showmenu(true)
     add_defines("YKM_VIEWBOX_DEBUG")
 
-option("ykm_viewbox_glfw")
-    set_default(false)
-    set_showmenu(true)
-option_end()
+target("ykm_sys")
+    set_kind("static")
+    set_languages("c++17")
+    add_includedirs("../headonly")
+    if is_plat("windows") then
+        add_files("sys/sys_win32.cpp")
+        add_syslinks("user32")
+    end
 
 target("ykm_viewbox")
     set_kind("static")
@@ -17,15 +21,29 @@ target("ykm_viewbox")
     add_includedirs("../headonly")
     add_includedirs("./include",{public=true})
     add_options("ykm_viewbox_debug")
-    add_options("ykm_viewbox_glfw")
     add_packages("fmt")
-    if has_config("ykm_viewbox_glfw") then
-        add_defines("YKM_VIEWBOX_GLFW")
-        add_packages("glfw")
-        add_files("viewbox/vb_glfw.cpp")
-    elseif is_plat("windows") then
+    if is_plat("windows") then
         add_files("viewbox/vb_win32.cpp")
         add_syslinks("user32")
     end
 
     add_files("sys/input_map.cpp")
+
+target("ykm_app")
+    set_kind("static")
+    set_languages("c++17")
+    --add_includedirs("../headonly")
+    add_includedirs("./")
+    add_includedirs("./include",{public=true})
+    add_options("ykm_viewbox_debug")
+    add_packages("fmt")
+
+    add_files("sys/input_map.cpp")
+    add_files("app/app.cpp")
+
+    if is_plat("windows") then
+        add_files("app/app_win32.cpp")
+        add_files("viewbox/vb_win32.cpp")
+        add_files("sys/sys_win32.cpp")
+        add_syslinks("user32")
+    end

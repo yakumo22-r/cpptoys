@@ -9,9 +9,10 @@ TODO: text input with candicate
 #ifndef YKM_VIEWBOX_WIN32_HPP
 #define YKM_VIEWBOX_WIN32_HPP
 
-#include "vb_win32.h"
+#include "vb_win32.hpp"
 
-#include <winuser.h>
+#include "ykm/utils/num_fmt.hpp"
+#include "../app/app_def.h"
 
 #include "debug.hpp"
 
@@ -19,9 +20,8 @@ using namespace ykm::app;
 
 namespace ykm
 {
-namespace viewbox_internal
-{
-void win32_plat_h::GetErrInfo() noexcept
+
+void ViewBox::PH::GetErrInfo() noexcept
 {
     HRESULT hr = GetLastError();
 
@@ -35,14 +35,17 @@ void win32_plat_h::GetErrInfo() noexcept
         LocalFree(pMsgBuf);
         err = pMsgBuf;
     }
-    last_err = fmt::format("[Error Code] 0x{:X}({}) \n[Description] {} \n", hr, (unsigned long)hr, err);
+
+    YkmApp_SetLastError(                                                                                 //
+        fmt::format("[Error Code] 0x{:X}({}) \n[Description] {} \n", hr, (unsigned long)hr, err).c_str() //
+    );
 }
 
-inline constexpr char const* class_name = "ykm_viewbox_0_0_1";
+inline constexpr char const* class_name = "ykm_ViewBox_0_0_1";
 
 LRESULT HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    win32_plat_h* const pWnd = reinterpret_cast<win32_plat_h*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    ViewBox::PH* const pWnd = reinterpret_cast<ViewBox::PH*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
 }
 
@@ -51,7 +54,7 @@ LRESULT HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexce
     if (msg == WM_NCCREATE)
     {
         const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
-        win32_plat_h* const pWnd = static_cast<win32_plat_h*>(pCreate->lpCreateParams);
+        ViewBox::PH* const pWnd = static_cast<ViewBox::PH*>(pCreate->lpCreateParams);
 
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pWnd));
         SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(HandleMsgThunk));
@@ -59,10 +62,10 @@ LRESULT HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexce
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-LRESULT win32_plat_h::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+LRESULT ViewBox::PH::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
 
-    using e = viewbox_evt;
+    using e = ViewBoxEvt;
     switch (msg)
     {
     case WM_ACTIVATE:
@@ -96,7 +99,7 @@ LRESULT win32_plat_h::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
     case WM_MOUSEWHEEL:
         // same as glfw version
-        //evts().mouse.scroll() = (int)(GET_WHEEL_DELTA_WPARAM(wParam) / ((float)time_dt()) * 10);
+        // evts().mouse.scroll() = (int)(GET_WHEEL_DELTA_WPARAM(wParam) / ((float)time_dt()) * 10);
         evts().mouse.scroll() = (int)(GET_WHEEL_DELTA_WPARAM(wParam) / 12.0f);
         evts().mouse.push_scroll_evt();
         break;
@@ -232,19 +235,25 @@ LRESULT win32_plat_h::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-} // namespace viewbox_internal
-
-viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title)
+YKM_APP_API
+ViewBox::ViewBox() : ph(*new PH())
 {
-    using namespace ::ykm::viewbox_internal;
-
-    if (YKM_VIEWBOX_PH(_ph)) destory();
-    ykm_log("viewbox created - {} impl win32", title);
-
-    _ph = new win32_plat_h();
-    auto& ph = *YKM_VIEWBOX_PH(_ph);
-    ph.hInst = GetModuleHandle(nullptr);
     ph.vb = this;
+    ph.hInst = GetModuleHandle(nullptr);
+    ph.hWnd = nullptr;
+}
+
+YKM_APP_API
+ViewBox::~ViewBox()
+{
+    Destory();
+    delete &ph;
+}
+
+YKM_APP_API
+YkmApp_Result ViewBox::Create(int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title)
+{
+    Destory();
 
     static WNDCLASSEX wc = {0};
     static bool wc_reg = false;
@@ -267,306 +276,302 @@ viewbox::result viewbox::create(int32_t posX, int32_t posY, int32_t sizeX, int32
         wc_reg = true;
     }
 
-    pos.x = posX;
-    pos.y = posY;
-
-    size.x = sizeX;
-    size.y = sizeY;
+    size = {sizeX, sizeY};
 
     text_title = std::string(title);
-    evts.clear_evts();
-    evts.keyboard.next_frame();
-    evts.mouse.next_frame();
 
     ph.style = WS_OVERLAPPEDWINDOW;
 
     ph.screen_half.x = GetSystemMetrics(SM_CXSCREEN) / 2;
     ph.screen_half.y = GetSystemMetrics(SM_CYSCREEN) / 2;
 
-    ph.lt_pos.x = ph.screen_half.x + pos.x - size.x / 2;
-    ph.lt_pos.y = ph.screen_half.y - pos.y - size.y / 2;
-    ph.hWnd = CreateWindow(class_name, title, ph.style, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, nullptr, nullptr, ph.hInst, _ph);
+    pos = {posX, posY};
 
-    // check window maximization status
-    if (IsZoomed(ph.hWnd)) { ph.state.set(win32_plat_h::zoomd); }
-    else { ph.state.reset(win32_plat_h::zoomd); }
+    ph.lt_pos = ph.pos_2_ltpos(pos);
 
-    RECT rect;
-    GetClientRect(ph.hWnd, &rect);
-    content_size.x = rect.right - rect.left;
-    content_size.y = rect.bottom - rect.top;
+    evts.clear_evts();
+    evts.keyboard.next_frame();
+    evts.mouse.next_frame();
+
+    ph.hWnd = CreateWindow(class_name, title, ph.style, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, nullptr, nullptr, ph.hInst, &ph);
 
     if (ph.hWnd == nullptr)
     {
         ph.GetErrInfo();
-        destory();
-        // MessageBox(0, ph.last_err.c_str(), "ykm viewbox create error", MB_OK);
-        return r_internal;
+        Destory();
+        // MessageBox(0, ph.last_err.c_str(), "ykm ViewBox create error", MB_OK);
+        return YkmApp_R_InternalError;
     }
 
-    return r_ok;
+    // check window maximization status
+    if (IsZoomed(ph.hWnd)) { ph.state.set(PH::zoomd); }
+    else { ph.state.reset(PH::zoomd); }
+
+    RECT rect;
+    GetClientRect(ph.hWnd, &rect);
+    content_size = {rect.right - rect.left, rect.bottom - rect.top};
+
+    ph.ca_content_size = content_size;
+    ph.ca_size = size;
+    ph.ca_pos = pos;
+
+    return YkmApp_R_Ok;
 }
 
-viewbox::result viewbox::process_loop()
+YKM_APP_API YkmApp_Result ViewBox::LoopBegin()
 {
-    if (!_ph) return r_uninitialized;
-
-    using namespace ::ykm::viewbox_internal;
-    auto ph = *YKM_VIEWBOX_PH(_ph);
-
-
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
     evts.clear_evts();
     evts.keyboard.next_frame();
     evts.mouse.clear();
-
-    MSG msg;
-
-    if (PeekMessage(&msg, ph.hWnd, 0, 0, PM_REMOVE) != 0)
-    {
-        if (msg.message == WM_QUIT)
-        {
-            ph.state.reset(win32_plat_h::alive);
-            return r_quit;
-        }
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
+    return YkmApp_R_Ok;
+}
+YKM_APP_API YkmApp_Result ViewBox::LoopHandleEvts()
+{
     auto& state = ph.state;
 
     // window resize rewrite
-    if (!state[win32_plat_h::zoomd] && state[win32_plat_h::rw_resizing] && (GetAsyncKeyState(VK_LBUTTON) & 0x8000))
+    if (!state[PH::zoomd] && state[PH::rw_resizing] && (GetAsyncKeyState(VK_LBUTTON) & 0x8000))
     {
         POINT cursor;
         GetCursorPos(&cursor);
-        int16_t deltaWidth;
-        int16_t deltaHeight;
 
-        state.set(win32_plat_h::d_pos);
-        state.set(win32_plat_h::d_size);
+        i32_xy v = {cursor.x - ph.rw_cursor.x, cursor.y - ph.rw_cursor.y};
+
+        int32_t left = ph.lt_pos.x;
+        int32_t right = left + size.x;
+
+        int32_t top = ph.lt_pos.y;
+        int32_t bottom = ph.lt_pos.y + size.y;
 
         switch (ph.rw_hithc)
         {
         case HTTOP:
-            deltaHeight = ph.rw_cursor.y - cursor.y;
-            size.y += deltaHeight;
-            ph.lt_pos.y -= deltaHeight;
-            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
+            top += v.y;
             break;
 
         case HTTOPRIGHT:
-            deltaWidth = cursor.x - ph.rw_cursor.x;
-            deltaHeight = ph.rw_cursor.y - cursor.y;
-            size.x += deltaWidth;
-            size.y += deltaHeight;
-            ph.lt_pos.y -= deltaHeight;
-            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
-            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
+            top += v.y;
+            right += v.x;
             break;
 
         case HTTOPLEFT:
-            deltaWidth = ph.rw_cursor.x - cursor.x;
-            deltaHeight = ph.rw_cursor.y - cursor.y;
-            size.x += deltaWidth;
-            size.y += deltaHeight;
-            ph.lt_pos.y -= deltaHeight;
-            ph.lt_pos.x -= deltaWidth;
-            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
-            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
+            top += v.y;
+            left += v.x;
             break;
 
         case HTRIGHT:
-            deltaWidth = cursor.x - ph.rw_cursor.x;
-            size.x += deltaWidth;
-            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
+            right += v.x;
             break;
 
         case HTLEFT:
-            deltaWidth = ph.rw_cursor.x - cursor.x;
-            size.x += deltaWidth;
-            ph.lt_pos.x -= deltaWidth;
-            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
+            left += v.x;
             break;
 
         case HTBOTTOMRIGHT:
-            deltaWidth = cursor.x - ph.rw_cursor.x;
-            deltaHeight = cursor.y - ph.rw_cursor.y;
-            size.x += deltaWidth;
-            size.y += deltaHeight;
-            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
-            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
+            bottom += v.y;
+            right += v.x;
             break;
 
         case HTBOTTOMLEFT:
-            deltaWidth = ph.rw_cursor.x - cursor.x;
-            deltaHeight = cursor.y - ph.rw_cursor.y;
-            size.x += deltaWidth;
-            size.y += deltaHeight;
-            ph.lt_pos.x -= deltaWidth;
-            pos.x = ph.lt_pos.x + size.x / 2 - ph.screen_half.x;
-            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
+            bottom += v.y;
+            left += v.x;
             break;
 
         case HTBOTTOM:
-            deltaHeight = cursor.y - ph.rw_cursor.y;
-            size.y += deltaHeight;
-            pos.y = -(ph.lt_pos.y + size.y / 2 - ph.screen_half.y);
+            bottom += v.y;
             break;
         }
+        ph.lt_pos = {left, top};
+
+        v = ph.ltpos_2_pos(ph.lt_pos);
+        if (pos != v) { evts.push_evts(ViewBoxEvt::move); }
+        pos = v;
+        ph.ca_pos = v;
+
+        v = {right - left, bottom - top};
+        if (size != v) { evts.push_evts(ViewBoxEvt::resize); }
+        size = v;
+        ph.ca_size = v;
+
+        ::MoveWindow(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, true);
+
+        RECT rect;
+        GetClientRect(ph.hWnd, &rect);
+        v = {rect.right - rect.left, rect.bottom - rect.top};
+        content_size = v;
+        ph.ca_content_size = v;
 
         ph.rw_cursor = cursor;
     }
-    else { state.reset(win32_plat_h::rw_resizing); }
+    else { state.reset(PH::rw_resizing); }
 
     // window move rewrite
-    if (!state[win32_plat_h::zoomd] && state[win32_plat_h::rw_moving] && (GetAsyncKeyState(VK_LBUTTON) & 0x8000))
+    if (!state[PH::zoomd] && state[PH::rw_moving] && (GetAsyncKeyState(VK_LBUTTON) & 0x8000))
     {
         POINT cursor;
         GetCursorPos(&cursor);
 
-        state.set(win32_plat_h::d_pos);
-        pos.x += cursor.x - ph.rw_cursor.x;
-        pos.y -= cursor.y - ph.rw_cursor.y;
+        i32_xy v = {cursor.x - ph.rw_cursor.x, ph.rw_cursor.y - cursor.y};
         ph.rw_cursor = cursor;
+
+        ph.ca_pos = pos + v;
+
+        if (pos != ph.ca_pos)
+        {
+            pos = ph.ca_pos;
+            ph.lt_pos = ph.pos_2_ltpos(pos);
+            evts.push_evts(ViewBoxEvt::move);
+            ::MoveWindow(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, true);
+        }
     }
-    else { state.reset(win32_plat_h::rw_moving); }
+    else { state.reset(PH::rw_moving); }
 
     // process window resize && move
-    if (state[win32_plat_h::d_pos] || state[win32_plat_h::d_size])
+    if (state[PH::d_size_pos])
     {
-
-        i32_xy n_xy;
-        n_xy.x = ph.screen_half.x + pos.x - size.x / 2;
-        n_xy.y = ph.screen_half.y - pos.y - size.y / 2;
-
-        ::MoveWindow(ph.hWnd, n_xy.x, n_xy.y, size.x, size.y, true);
-
-        if (n_xy != ph.lt_pos)
+        if (size != ph.ca_size)
         {
-            ph.lt_pos = n_xy;
-            evts.push_evts(viewbox_evt::move);
+            evts.push_evts(ViewBoxEvt::resize);
+            size = ph.ca_size;
+            content_size = ph.ca_content_size;
         }
+
+        ph.lt_pos = ph.pos_2_ltpos(ph.ca_pos);
+        if (pos != ph.ca_pos)
+        {
+            evts.push_evts(ViewBoxEvt::move);
+            pos = ph.ca_pos;
+        }
+
+        ::MoveWindow(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, true);
 
         RECT rect;
         GetClientRect(ph.hWnd, &rect);
-        n_xy.x = rect.right - rect.left;
-        n_xy.y = rect.bottom - rect.top;
-        if (content_size != n_xy)
-        {
-            content_size = n_xy;
-            evts.push_evts(viewbox_evt::resize);
-        }
+        i32_xy v = {rect.right - rect.left, rect.bottom - rect.top};
+        content_size = v;
+        ph.ca_content_size = v;
 
-        state.reset(win32_plat_h::d_pos);
-        state.reset(win32_plat_h::d_size);
+        state.reset(PH::d_size_pos);
     }
 
-    if (state[win32_plat_h::d_title])
+    if (state[PH::d_title])
     {
         ::SetWindowText(ph.hWnd, text_title.c_str());
-        state.reset(win32_plat_h::d_title);
-        evts.push_evts(viewbox_evt::title);
+        state.reset(PH::d_title);
+        evts.push_evts(ViewBoxEvt::title);
     }
 
-    return r_ok;
+    return YkmApp_R_Ok;
 }
 
-YKM_VIEWBOX_RESULT viewbox::show()
-{
-    if (!_ph) return r_uninitialized;
-    using namespace ::ykm::viewbox_internal;
-    auto ph = *YKM_VIEWBOX_PH(_ph);
+// YKM_APP_API
+// YkmApp_Result ViewBox::ProcessLoop()
+//{
+//     if (!ph.hWnd) return YkmApp_R_Uninitailized;
 
-    evts.push_evts(viewbox_evt::awake);
+//    evts.clear_evts();
+//    evts.keyboard.next_frame();
+//    evts.mouse.clear();
+
+//    MSG msg;
+
+//    if (PeekMessage(&msg, ph.hWnd, 0, 0, PM_REMOVE) != 0)
+//    {
+//        if (msg.message == WM_QUIT)
+//        {
+//            ph.state.reset(PH::alive);
+//            return r_quit;
+//        }
+//        TranslateMessage(&msg);
+//        DispatchMessage(&msg);
+//    }
+
+//}
+
+YKM_APP_API
+YkmApp_Result ViewBox::Show()
+{
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
+
+    evts.push_evts(ViewBoxEvt::awake);
     ::ShowWindow(ph.hWnd, SW_SHOW);
-    return r_ok;
+    return YkmApp_R_Ok;
 }
 
-YKM_VIEWBOX_RESULT viewbox::set_title(const char* title)
+YKM_APP_API
+YkmApp_Result ViewBox::SetTitle(const char* title)
 {
-    if (!_ph) return r_uninitialized;
-    using namespace ::ykm::viewbox_internal;
-    auto ph = *YKM_VIEWBOX_PH(_ph);
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
 
     text_title = title;
-    ph.state.set(win32_plat_h::d_title);
-    return r_ok;
+    ph.state.set(PH::d_title);
+    return YkmApp_R_Ok;
 }
 
-YKM_VIEWBOX_RESULT viewbox::set_pos(int x, int y)
+YKM_APP_API
+YkmApp_Result ViewBox::SetPos(int x, int y)
 {
-    if (!_ph) return r_uninitialized;
-    using namespace ::ykm::viewbox_internal;
-    auto ph = *YKM_VIEWBOX_PH(_ph);
-    pos.x = x;
-    pos.y = y;
-    ph.state.set(win32_plat_h::d_pos);
-    return r_ok;
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
+    ph.ca_pos = {x, y};
+    ph.state.set(PH::d_size_pos);
+    return YkmApp_R_Ok;
 }
 
-YKM_VIEWBOX_RESULT viewbox::set_size(int x, int y)
+YKM_APP_API
+YkmApp_Result ViewBox::SetSize(int x, int y)
 {
-    if (!_ph) return r_uninitialized;
-    using namespace ::ykm::viewbox_internal;
-    auto ph = *YKM_VIEWBOX_PH(_ph);
-    size.x = x;
-    size.y = y;
-    ph.state.set(win32_plat_h::d_size);
-    return r_ok;
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
+
+    ph.ca_size = {x, y};
+
+    RECT rect;
+    GetClientRect(ph.hWnd, &rect);
+    ph.ca_content_size = {rect.right - rect.left, rect.bottom - rect.top};
+
+    ph.state.set(PH::d_size_pos);
+    return YkmApp_R_Ok;
 }
 
-YKM_VIEWBOX_RESULT viewbox::set_content_size(int x, int y)
+YKM_APP_API
+YkmApp_Result ViewBox::SetContentSize(int x, int y)
 {
-    if (!_ph) return r_uninitialized;
-    using namespace ::ykm::viewbox_internal;
-    auto ph = *YKM_VIEWBOX_PH(_ph);
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
 
     RECT r;
     r.top = 0;
     r.left = 0;
     r.right = x;
     r.bottom = y;
-    content_size.x = x;
-    content_size.y = y;
+
+    ph.ca_content_size = {x, y};
 
     AdjustWindowRect(&r, ph.style, FALSE);
 
-    size.x = r.right - r.left;
-    size.y = r.bottom - r.top;
-    ph.state.set(win32_plat_h::d_size);
-    return r_ok;
+    ph.ca_size = {r.right - r.left, r.bottom - r.top};
+
+    ph.state.set(PH::d_size_pos);
+    return YkmApp_R_Ok;
 }
 
-YKM_VIEWBOX_RESULT viewbox::hide()
+YKM_APP_API
+YkmApp_Result ViewBox::Hide()
 {
-    using namespace ::ykm::viewbox_internal;
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
 
-    if (!_ph) return r_uninitialized;
-    auto ph = *YKM_VIEWBOX_PH(_ph);
-
-    evts.push_evts(viewbox_evt::sleep);
+    evts.push_evts(ViewBoxEvt::sleep);
     ::ShowWindow(ph.hWnd, SW_MINIMIZE);
-    return r_ok;
+    return YkmApp_R_Ok;
 }
 
-YKM_VIEWBOX_VOID viewbox::destory()
+YKM_APP_API
+void ViewBox::Destory()
 {
-    using namespace ::ykm::viewbox_internal;
+    if (!ph.hWnd) return;
 
-    ::DestroyWindow(YKM_VIEWBOX_PH(_ph)->hWnd);
-    delete YKM_VIEWBOX_PH(_ph);
-    _ph = nullptr;
+    ::DestroyWindow(ph.hWnd);
+    ph.hWnd = nullptr;
 }
-
-YKM_VIEWBOX_I(std::string) viewbox::get_internal_errinfo() const
-{
-    using namespace ::ykm::viewbox_internal;
-
-    auto ph = *YKM_VIEWBOX_PH(_ph);
-    return _ph ? YKM_VIEWBOX_PH(_ph)->last_err : "view box impl uninitialized";
-}
-
-YKM_VIEWBOX_VOID viewbox::on_fatal_error(int code, const char* title, const char* what) { MessageBox(0, what, title, MB_OK); }
 
 } // namespace ykm
 
