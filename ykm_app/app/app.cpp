@@ -4,6 +4,9 @@
 #include <fmt/format.h>
 
 YKM_APP_CAPI
+YkmApp_GPool YkmApp_GetGPool() { return &ykm::appData.g; }
+
+YKM_APP_CAPI
 YkmApp_Result YkmApp_GetInfo(const YkmApp_Info** info)
 {
     *info = &ykm::appData.info;
@@ -56,13 +59,14 @@ YkmApp_Result YkmApp_SetVersion( //
 }
 
 YKM_APP_CAPI
-void YkmApp_SetTickSleepPerSecond(float fps) //
+void YkmApp_SetMaxTicksPerSecond(float tps) //
 {
-    ykm::appData.info.tickMaxPerSecond = fps;
+    ykm::appData.info.tickMaxPerSecond = tps;
+    ykm::appData.timer.set_fps(tps);
 }
 
 YKM_APP_CAPI
-void YkmApp_SetTickEvtsMax(int max) //
+void YkmApp_SetMaxEvtsPerTick(int max) //
 {
     ykm::appData.info.evtsHandlePerTick = max;
 }

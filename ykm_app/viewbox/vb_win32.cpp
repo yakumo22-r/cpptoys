@@ -16,6 +16,9 @@ TODO: text input with candicate
 
 #include "debug.hpp"
 
+#include <winuser.h>
+
+YKM_APP_VIEWBOX_DEBUG;
 using namespace ykm::app;
 
 namespace ykm
@@ -65,29 +68,33 @@ LRESULT HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexce
 LRESULT ViewBox::PH::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
 
-    using e = ViewBoxEvt;
     switch (msg)
     {
     case WM_ACTIVATE:
-        evts().push_evts(LOWORD(wParam) != WA_INACTIVE ? e::active : e::unactive);
         if (LOWORD(wParam) != WA_INACTIVE)
+        {
+            if (!state[active]) { evts().push_evts(ViewBoxEvt::active); }
             state.set(active);
+        }
         else
+        {
+            if (state[active]) { evts().push_evts(ViewBoxEvt::unactive); }
             state.reset(active);
+        }
 
     case WM_SIZE:
-        content_size().x = LOWORD(lParam);
-        content_size().y = HIWORD(lParam);
 
         // check window maximization status
-        if (IsZoomed(hWnd))
-            state.set(zoomd);
-        else
-            state.reset(zoomd);
 
-        break;
-
-    case WM_MOVE:
+        if (wParam != SIZE_MINIMIZED)
+        {
+            content_size().x = LOWORD(lParam);
+            content_size().y = HIWORD(lParam);
+            if (IsZoomed(hWnd))
+                state.set(zoomd);
+            else
+                state.reset(zoomd);
+        }
 
         break;
 
@@ -199,6 +206,20 @@ LRESULT ViewBox::PH::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_NCRBUTTONUP:
         return NULL;
 
+    case WM_SYSCOMMAND:
+        if (wParam == SC_MINIMIZE)
+        {
+            if (!state[sleepd]) { evts().push_evts(ViewBoxEvt::sleep); }
+            state.set(sleepd);
+            state.reset(zoomd);
+        }
+        else if (wParam == SC_RESTORE)
+        {
+            if (state[sleepd]) { evts().push_evts(ViewBoxEvt::awake); }
+            state.reset(sleepd);
+        }
+        break;
+
     case WM_NCLBUTTONUP:
         if (rw_hithc == wParam)
         {
@@ -303,6 +324,8 @@ YkmApp_Result ViewBox::Create(int32_t posX, int32_t posY, int32_t sizeX, int32_t
         // MessageBox(0, ph.last_err.c_str(), "ykm ViewBox create error", MB_OK);
         return YkmApp_R_InternalError;
     }
+    ::ShowWindow(ph.hWnd, SW_MINIMIZE);
+    ph.state.set(PH::sleepd);
 
     // check window maximization status
     if (IsZoomed(ph.hWnd)) { ph.state.set(PH::zoomd); }
@@ -463,40 +486,42 @@ YKM_APP_API YkmApp_Result ViewBox::LoopHandleEvts()
         evts.push_evts(ViewBoxEvt::title);
     }
 
+    if (state[PH::d_sleep] && state[PH::ca_sleepd] != state[PH::sleepd])
+    {
+        if (state[PH::ca_sleepd])
+        {
+            ::ShowWindow(ph.hWnd, SW_SHOWMINIMIZED);
+            evts.push_evts(ViewBoxEvt::sleep);
+            state.set(PH::sleepd);
+        }
+        else
+        {
+            ::ShowWindow(ph.hWnd, SW_SHOWNORMAL);
+            ::MoveWindow(ph.hWnd, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, true);
+            evts.push_evts(ViewBoxEvt::awake);
+            state.reset(PH::sleepd);
+        }
+        state.reset(PH::d_sleep);
+    }
+
     return YkmApp_R_Ok;
 }
-
-// YKM_APP_API
-// YkmApp_Result ViewBox::ProcessLoop()
-//{
-//     if (!ph.hWnd) return YkmApp_R_Uninitailized;
-
-//    evts.clear_evts();
-//    evts.keyboard.next_frame();
-//    evts.mouse.clear();
-
-//    MSG msg;
-
-//    if (PeekMessage(&msg, ph.hWnd, 0, 0, PM_REMOVE) != 0)
-//    {
-//        if (msg.message == WM_QUIT)
-//        {
-//            ph.state.reset(PH::alive);
-//            return r_quit;
-//        }
-//        TranslateMessage(&msg);
-//        DispatchMessage(&msg);
-//    }
-
-//}
 
 YKM_APP_API
 YkmApp_Result ViewBox::Show()
 {
     if (!ph.hWnd) return YkmApp_R_Uninitialized;
+    ph.state.set(PH::d_sleep);
+    ph.state.reset(PH::ca_sleepd);
+    return YkmApp_R_Ok;
+}
 
-    evts.push_evts(ViewBoxEvt::awake);
-    ::ShowWindow(ph.hWnd, SW_SHOW);
+YKM_APP_API
+YkmApp_Result ViewBox::Hide()
+{
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
+    ph.state.set(PH::d_sleep);
+    ph.state.set(PH::ca_sleepd);
     return YkmApp_R_Ok;
 }
 
@@ -552,16 +577,6 @@ YkmApp_Result ViewBox::SetContentSize(int x, int y)
     ph.ca_size = {r.right - r.left, r.bottom - r.top};
 
     ph.state.set(PH::d_size_pos);
-    return YkmApp_R_Ok;
-}
-
-YKM_APP_API
-YkmApp_Result ViewBox::Hide()
-{
-    if (!ph.hWnd) return YkmApp_R_Uninitialized;
-
-    evts.push_evts(ViewBoxEvt::sleep);
-    ::ShowWindow(ph.hWnd, SW_MINIMIZE);
     return YkmApp_R_Ok;
 }
 

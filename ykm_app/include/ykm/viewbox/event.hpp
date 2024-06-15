@@ -24,7 +24,6 @@ struct ViewBoxEvt
         resize,
         title,
         text,
-        pointer,
         active,
         unactive,
         evt_num,
@@ -41,11 +40,30 @@ struct ViewBoxEvt
     bool on_resize() const /********/ { return evts[resize]; }
     bool on_title() const /*********/ { return evts[title]; }
     bool on_text() const /**********/ { return evts[text]; }
-    bool on_pointer() const /*******/ { return evts[pointer]; }
     bool on_active() const /********/ { return evts[active]; }
     bool on_unactive() const /******/ { return evts[unactive]; }
 
-    void push_evts(evt e) { evts.set(e); }
+    void push_evts(evt e)
+    {
+        evts.set(e);
+        switch (e)
+        {
+        case sleep:
+            evts.reset(awake);
+            break;
+        case awake:
+            evts.reset(sleep);
+            break;
+        case active:
+            evts.reset(unactive);
+            break;
+        case unactive:
+            evts.reset(active);
+            break;
+        default:
+            return;
+        }
+    }
     void push_evts(uint32_t e) { evts.set(e); }
     void clear_evts() { evts.reset(); }
 

@@ -24,6 +24,7 @@
 //*******************************************//
 
 typedef const char* YkmApp_ErrBuffer;
+typedef void* YkmApp_GPool;
 
 #define YkmApp_False 0
 #define YkmApp_True 1

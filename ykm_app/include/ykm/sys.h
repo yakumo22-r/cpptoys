@@ -21,6 +21,9 @@
 #define YKM_SYS_WRAP_C YKM_APP_WRAP_C
 #define YKM_SYS_CAPI YKM_SYS_WRAP_C YKM_SYS_API
 
+YKM_SYS_CAPI
+void YkmSys_SetGPool(YkmApp_GPool gpool);
+
 //*****************************************//
 //********** base system api 1.0 **********//
 

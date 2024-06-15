@@ -35,6 +35,9 @@ struct YkmApp_Info
 };
 
 YKM_APP_CAPI
+YkmApp_GPool YkmApp_GetGPool();
+
+YKM_APP_CAPI
 YkmApp_Result YkmApp_GetInfo(const YkmApp_Info** info);
 
 YKM_APP_CAPI
@@ -51,10 +54,10 @@ YKM_APP_CAPI
 YkmApp_Bool YkmApp_Alive();
 
 YKM_APP_CAPI
-void YkmApp_SetTickSleepPerSecond(float fps);
+void YkmApp_SetMaxTicksPerSecond(float tps);
 
 YKM_APP_CAPI
-void YkmApp_SetTickEvtsMax(int max);
+void YkmApp_SetMaxEvtsPerTick(int max);
 
 YKM_APP_CAPI
 YkmApp_Result YkmApp_LoopSleep();

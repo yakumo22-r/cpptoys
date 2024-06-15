@@ -27,6 +27,7 @@ local function ykm_app_app()
 end
 
 local function ykm_app_sys()
+    add_files("sys/sys.cpp")
     add_files("sys/input_map.cpp")
 
     if is_plat("windows") then

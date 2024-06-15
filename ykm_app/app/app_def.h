@@ -3,15 +3,21 @@
 
 #include "ykm/app.h"
 
+#include "../global.h"
+
 #include "frame_delay.hpp"
+
+void YkmApp_SetLastError(const char* msg);
 
 namespace ykm
 {
 
 struct App_PH;
 
+
 struct AppData
 {
+    AppGlobal g;
     YkmApp_Info info;
     frame_delay timer;
 
@@ -31,6 +37,8 @@ struct AppData
         info.deltaTime = 0;
 
         info.alive = true;
+
+        g.update_err = YkmApp_SetLastError;
         update_time();
     }
 
@@ -46,6 +54,5 @@ extern AppData appData;
 
 } // namespace ykm
 
-void YkmApp_SetLastError(const char* msg);
 
 #endif

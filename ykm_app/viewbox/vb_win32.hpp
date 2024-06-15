@@ -9,8 +9,6 @@
 #include <Windows.h>
 #endif
 
-#include <string>
-
 #include "ykm/viewbox.hpp"
 
 namespace ykm
@@ -50,9 +48,9 @@ struct ViewBox::PH : ViewBox::implbase
         // clang-format off
         rw_resizing, rw_moving,
 
-        active, alive, zoomd,
+        active, alive, zoomd,sleepd,ca_sleepd,
 
-        d_title, d_size_pos,
+        d_title, d_size_pos,d_sleep,
         // clang-format on
         state_num
     };

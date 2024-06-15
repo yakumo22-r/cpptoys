@@ -23,6 +23,7 @@ int main()
 
         const YkmApp_Info* appInfo;
         YkmApp_GetInfo(&appInfo);
+        YkmApp_SetMaxTicksPerSecond(30);
 
         while (appInfo->alive)
         {
@@ -33,6 +34,10 @@ int main()
             check > vb.LoopHandleEvts();
 
             if (vb.event().on_close()) { YkmApp_Quit(); }
+            if(vb.event().on_awake()){ fmt::println("awake"); }
+            if(vb.event().on_sleep()){ fmt::println("sleep"); }
+            if(vb.event().on_active()){ fmt::println("active");}
+            if(vb.event().on_unactive()){ fmt::println("unactive");}
             for (auto evt : vb.event().mouse.buf_entered())
             {
                 if (evt == ykm::input::mouse_evt::move)
