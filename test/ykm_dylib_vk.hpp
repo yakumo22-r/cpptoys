@@ -5,6 +5,15 @@
    some code copy at https://blog.csdn.net/smcnjyddx0623/article/details/134908747
 */
 
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN32_) || defined(WIN64) || defined(_WIN64) || defined(_WIN64_)
+#define VULKAN_LIB "vulkan-1.dll"
+#define VK_USE_PLATFORM_WIN32_KHR
+#elif defined(ANDROID) || defined(_ANDROID_)
+#define VULKAN_LIB "libvulkan.so"
+#else
+#define VULKAN_LIB "libvulkan.so.1"
+#endif
+
 #ifdef __APPLE__
 
 #ifdef VK_NO_PROTOTYPES
@@ -29,13 +38,37 @@ inline void init_vk_loader() {}
 
 #include <dylib.hpp>
 
+#define YKM_VK_FUNC_DEF(name) PFN_##name ##name;
+#define YKM_VK_FUNC_EXTREN(name) extern YKM_VK_FUNC_DEF(name);
+#define YKM_VK_FUNC_SET(name) ::ykm_vk_pfn::##name = reinterpret_cast<PFN_##name>(lib.get_function<PFN_##name>(#name));
+
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN32_) || defined(WIN64) || defined(_WIN64) || defined(_WIN64_)
-#define VULKAN_LIB "vulkan-1.dll"
+
+#define YKM_VK_FUNC_LIST_PLAT_EXT(YKM_MACRO) \
+    YKM_MACRO(vkCreateWin32SurfaceKHR)     \
+    YKM_MACRO(vkGetPhysicalDeviceWin32PresentationSupportKHR)
+
+namespace ykm_vk_pfn
+{
+    YKM_VK_FUNC_LIST_PLAT_EXT(YKM_VK_FUNC_EXTREN)
+}
+
+inline VkResult vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
+{
+    return ::ykm_vk_pfn::vkCreateWin32SurfaceKHR(instance,pCreateInfo,pAllocator,pSurface);
+}
+
+inline VkBool32 vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex)
+{
+    return ::ykm_vk_pfn::vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
+}
+
 #elif defined(ANDROID) || defined(_ANDROID_)
-#define VULKAN_LIB "libvulkan.so"
+    
 #else
-#define VULKAN_LIB "libvulkan.so.1"
+
 #endif
+
 
 #define APPLY_PFN_DEF_VK_FUNCTIONS(PFN_DEF)                 \
     PFN_DEF(vkGetInstanceProcAddr)                          \
@@ -184,13 +217,8 @@ inline void init_vk_loader() {}
     PFN_DEF(vkCmdBeginRenderPass)                           \
     PFN_DEF(vkCmdNextSubpass)                               \
     PFN_DEF(vkCmdEndRenderPass)                             \
-    PFN_DEF(vkCmdExecuteCommands)
-
-#define DEFINE_VK_FUNCTION_MACRO(function) PFN_##function function;
-
-#define EXTERN_VK_FUNCTION_MACRO(function) extern DEFINE_VK_FUNCTION_MACRO(function);
-
-#define GET_VK_FUNCTION_PROCADDR(function) function = reinterpret_cast<PFN_##function>(lib.get_function<PFN_##function>(#function));
+    PFN_DEF(vkCmdExecuteCommands)                           \
+    PFN_DEF(vkEnumerateInstanceVersion)                     \
 
 APPLY_PFN_DEF_VK_FUNCTIONS(EXTERN_VK_FUNCTION_MACRO);
 void init_vk_loader();
@@ -220,5 +248,17 @@ inline void ykm_vk_extension_spec_wrap(std::vector<const char*>& exs, VkInstance
     }
 #endif
 }
+
+// TAG: vk pfn api wrap
+// TODO: all api wrap
+inline VkResult vkCreateInstance(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkInstance* pInstance)
+{
+    return pfn_vkCreateInstance(pCreateInfo, pAllocator, pInstance);
+}
+inline void vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks* pAllocator){
+    pfn_vkDestroyInstance(instance, pAllocator);
+}
+
+inline VkResult vkEnumerateInstanceVersion(uint32_t* pApiVersion) { return pfn_vkEnumerateInstanceVersion(pApiVersion); }
 
 #endif

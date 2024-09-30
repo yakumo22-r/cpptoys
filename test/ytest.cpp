@@ -78,10 +78,3 @@ Test(enum_set)
     _logexpr(EC_Map.by_code(EC::A));
     _logexpr(EC_Map.by_code(EC::B));
 };
-
-#include <ykm/enum_map_macro.h>
-
-#undef YKM_ENUM_MAP_NS
-#define YKM_ENUM_MAP_NS ::EC
-
-ykm::enum_map<EC, 4> EC_Map = {ENUM_ELEMENT_EC};

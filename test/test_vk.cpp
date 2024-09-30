@@ -1,22 +1,22 @@
 #include <iostream>
 #include <vector>
 
-#include <GLFW/glfw3.h>
+// #include <GLFW/glfw3.h>
 
-#include "ykm_dylib_vk.h"
+#include "ykm_dylib_vk.hpp"
 
 YKM_DYLIB_VK_DEF_LOADER;
 
-std::vector<const char*> get_require_extensions()
-{
-    uint32_t glfwExCount = 0;
-    const char** glfwExs;
-    glfwExs = glfwGetRequiredInstanceExtensions(&glfwExCount);
+// std::vector<const char*> get_require_extensions()
+// {
+//     uint32_t glfwExCount = 0;
+//     const char** glfwExs;
+//     glfwExs = glfwGetRequiredInstanceExtensions(&glfwExCount);
 
-    std::vector<const char*> exs(glfwExs, glfwExs + glfwExCount);
-    exs.push_back("VK_KHR_get_physical_device_properties2");
-    return exs;
-}
+//     std::vector<const char*> exs(glfwExs, glfwExs + glfwExCount);
+//     exs.push_back("VK_KHR_get_physical_device_properties2");
+//     return exs;
+// }
 
 int main()
 {
@@ -47,12 +47,12 @@ int main()
 
     std::cout << "Vulkan SDK Version: " << vk_sdk_ver << std::endl;
 
-    auto reqExs = get_require_extensions();
+    // auto reqExs = get_require_extensions();
 
-    ykm_vk_extension_spec_wrap(reqExs, createInfo, sdkVersion);
+    // ykm_vk_extension_spec_wrap(reqExs, createInfo, sdkVersion);
 
-    createInfo.enabledExtensionCount = (uint32_t)reqExs.size();
-    createInfo.ppEnabledExtensionNames = reqExs.data();
+    // createInfo.enabledExtensionCount = (uint32_t)reqExs.size();
+    // createInfo.ppEnabledExtensionNames = reqExs.data();
 
     VkInstance instance;
     if (auto code = vkCreateInstance(&createInfo, nullptr, &instance); code != VK_SUCCESS)
@@ -62,21 +62,21 @@ int main()
     }
 
     // init_vk_loader();
-    if (!glfwInit()) { return -1; }
+    // if (!glfwInit()) { return -1; }
 
-    GLFWwindow* wnd = glfwCreateWindow(600, 400, "hello", NULL, NULL);
-    if (!wnd)
-    {
-        glfwTerminate();
-        return -1;
-    }
+    // GLFWwindow* wnd = glfwCreateWindow(600, 400, "hello", NULL, NULL);
+    // if (!wnd)
+    // {
+    //     glfwTerminate();
+    //     return -1;
+    // }
 
-    glfwMakeContextCurrent(wnd);
-    while (!glfwWindowShouldClose(wnd))
-    {
-        glfwPollEvents(); //
-    }
-    glfwTerminate();
+    // glfwMakeContextCurrent(wnd);
+    // while (!glfwWindowShouldClose(wnd))
+    // {
+    //     glfwPollEvents(); //
+    // }
+    // glfwTerminate();
     vkDestroyInstance(instance, nullptr);
 
     return 0;
