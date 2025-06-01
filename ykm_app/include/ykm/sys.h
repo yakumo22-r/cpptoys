@@ -7,21 +7,9 @@
 #define YKM_APP_SYS_H
 
 #include "base.h"
+#include "app.h"
 
-#ifdef YKM_SYS_SHARED_LIB
-#if defined(YKM_SYS_SHARED_BUILD)
-#define YKM_SYS_API YKM_APP_EXPORT
-#else
-#define YKM_SYS_API YKM_APP_IMPORT
-#endif
-#else
-#define YKM_SYS_API
-#endif
-
-#define YKM_SYS_WRAP_C YKM_APP_WRAP_C
-#define YKM_SYS_CAPI YKM_SYS_WRAP_C YKM_SYS_API
-
-YKM_SYS_CAPI
+YKM_APP_CAPI
 void YkmSys_SetGPool(YkmApp_GPool gpool);
 
 //*****************************************//
@@ -43,7 +31,7 @@ struct YkmSys_ScreenInfo
     int id;
 };
 
-YKM_SYS_CAPI
+YKM_APP_CAPI
 YkmSys_ScreenInfo* YkmSys_GetScreenInfo(int* num);
 
 // TODO get system fonts resources
@@ -76,7 +64,7 @@ struct YkmSys_InputMap
 #define YKM_SYS_Input_MapId_Keycode 0
 #define YKM_SYS_Input_MapId_MouseEvt 1
 
-YKM_SYS_CAPI
+YKM_APP_CAPI
 YkmSys_InputMap YkmSys_GetInputMap(int mapId);
 
 //********** input **********//

@@ -58,7 +58,7 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
     return TRUE;
 }
 
-YKM_SYS_CAPI
+YKM_APP_CAPI
 YkmSys_ScreenInfo* YkmSys_GetScreenInfo(int* num)
 {
     screenInfos.clear();

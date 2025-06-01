@@ -50,5 +50,6 @@ target("test_vk")
     end
     add_packages("vulkan-headers")
     add_packages("glfw")
+    add_packages("fmt")
     set_targetdir("$(projectdir)/xmake-build")
     add_files("./test_vk.cpp")

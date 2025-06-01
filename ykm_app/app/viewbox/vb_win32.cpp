@@ -3,18 +3,18 @@ windows window Interface encapsulation
 
 version: dev 0.0.2
 
-TODO: text input with candicate
+ TODO: text input with candicate
 */
-
-#ifndef YKM_VIEWBOX_WIN32_HPP
-#define YKM_VIEWBOX_WIN32_HPP
 
 #include "vb_win32.hpp"
 
+#include "fmt/core.h"
+#include "ykm/app.h"
 #include "ykm/utils/num_fmt.hpp"
-#include "../app/app_def.h"
+#include "../app_def.h"
 
 #include "debug.hpp"
+#include "ykm/viewbox.hpp"
 
 #include <winuser.h>
 
@@ -257,25 +257,18 @@ LRESULT ViewBox::PH::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-YKM_APP_API
-ViewBox::ViewBox() : ph(*new PH())
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_Create(YkmApp_ViewBox* vb, int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title)
 {
-    ph.vb = this;
-    ph.hInst = GetModuleHandle(nullptr);
-    ph.hWnd = nullptr;
-}
 
-YKM_APP_API
-ViewBox::~ViewBox()
-{
-    Destory();
-    delete &ph;
-}
+    YkmApp_ViewBox_Destory(vb);
+    using PH = ViewBox::PH;
 
-YKM_APP_API
-YkmApp_Result ViewBox::Create(int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title)
-{
-    Destory();
+    auto* ph = new PH();
+    vb->ph = ph;
+    ph->vb = vb;
+    ph->hInst = GetModuleHandle(nullptr);
+    ph->hWnd = nullptr;
 
     static WNDCLASSEX wc = {0};
     static bool wc_reg = false;
@@ -287,7 +280,7 @@ YkmApp_Result ViewBox::Create(int32_t posX, int32_t posY, int32_t sizeX, int32_t
         wc.lpfnWndProc = HandleMsgSetup;
         wc.cbClsExtra = 0;
         wc.cbWndExtra = 0;
-        wc.hInstance = ph.hInst;
+        wc.hInstance = ph->hInst;
         wc.hIcon = nullptr;
         wc.hCursor = nullptr;
         wc.hbrBackground = nullptr;
@@ -298,61 +291,94 @@ YkmApp_Result ViewBox::Create(int32_t posX, int32_t posY, int32_t sizeX, int32_t
         wc_reg = true;
     }
 
-    size = {sizeX, sizeY};
+    vb->size = {sizeX, sizeY};
 
-    text_title = std::string(title);
+    vb->text_title = std::string(title);
 
-    ph.style = WS_OVERLAPPEDWINDOW;
+    ph->style = WS_OVERLAPPEDWINDOW;
 
-    ph.screen_half.x = GetSystemMetrics(SM_CXSCREEN) / 2;
-    ph.screen_half.y = GetSystemMetrics(SM_CYSCREEN) / 2;
+    ph->screen_half.x = GetSystemMetrics(SM_CXSCREEN) / 2;
+    ph->screen_half.y = GetSystemMetrics(SM_CYSCREEN) / 2;
 
-    pos = {posX, posY};
+    vb->pos = {posX, posY};
 
-    ph.lt_pos = ph.pos_2_ltpos(pos);
+    ph->lt_pos = ph->pos_2_ltpos(vb->pos);
 
+    auto& evts = vb->evts;
     evts.clear_evts();
     evts.keyboard.next_frame();
     evts.mouse.next_frame();
 
-    ph.hWnd = CreateWindow(class_name, title, ph.style, ph.lt_pos.x, ph.lt_pos.y, size.x, size.y, nullptr, nullptr, ph.hInst, &ph);
+    ph->hWnd = CreateWindow(class_name,       //
+                            title,            //
+                            ph->style,        //
+                            ph->lt_pos.x,     //
+                            ph->lt_pos.y,     //
+                            vb->size.x,       //
+                            vb->size.y,       //
+                            nullptr, nullptr, //
+                            ph->hInst, ph);
 
-    if (ph.hWnd == nullptr)
+    if (ph->hWnd == nullptr)
     {
-        ph.GetErrInfo();
-        Destory();
+        ph->GetErrInfo();
+        YkmApp_ViewBox_Destory(vb);
         // MessageBox(0, ph.last_err.c_str(), "ykm ViewBox create error", MB_OK);
         return YkmApp_R_InternalError;
     }
-    ::ShowWindow(ph.hWnd, SW_MINIMIZE);
-    ph.state.set(PH::sleepd);
+
+    ::ShowWindow(ph->hWnd, SW_SHOWNORMAL);
+    RECT rect;
+    GetClientRect(ph->hWnd, &rect);
+    vb->content_size = {rect.right - rect.left, rect.bottom - rect.top};
+
+    ph->state.set(PH::sleepd);
 
     // check window maximization status
-    if (IsZoomed(ph.hWnd)) { ph.state.set(PH::zoomd); }
-    else { ph.state.reset(PH::zoomd); }
+    if (IsZoomed(ph->hWnd)) { ph->state.set(PH::zoomd); }
+    else { ph->state.reset(PH::zoomd); }
 
-    RECT rect;
-    GetClientRect(ph.hWnd, &rect);
-    content_size = {rect.right - rect.left, rect.bottom - rect.top};
-
-    ph.ca_content_size = content_size;
-    ph.ca_size = size;
-    ph.ca_pos = pos;
+    ph->ca_content_size = vb->content_size;
+    ph->ca_size = vb->size;
+    ph->ca_pos = vb->pos;
 
     return YkmApp_R_Ok;
 }
 
-YKM_APP_API YkmApp_Result ViewBox::LoopBegin()
+YKM_APP_CAPI
+void YkmApp_ViewBox_Destory(YkmApp_ViewBox* vb)
 {
-    if (!ph.hWnd) return YkmApp_R_Uninitialized;
+    if (vb->ph)
+    {
+        auto* ph = (ViewBox::PH*)vb->ph;
+        ::DestroyWindow(ph->hWnd);
+        delete ph;
+        vb->ph = nullptr;
+    }
+}
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_LoopBegin(YkmApp_ViewBox* vb)
+{
+    if (!vb->ph) return YkmApp_R_Uninitialized;
+    auto& evts = vb->evts;
     evts.clear_evts();
     evts.keyboard.next_frame();
     evts.mouse.clear();
     return YkmApp_R_Ok;
 }
-YKM_APP_API YkmApp_Result ViewBox::LoopHandleEvts()
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_LoopHandleEvts(YkmApp_ViewBox* vb)
 {
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
     auto& state = ph.state;
+    auto& size = vb->size;
+    auto& pos = vb->pos;
+    auto& content_size = vb->content_size;
+    auto& evts = vb->evts;
+    auto& text_title = vb->text_title;
 
     // window resize rewrite
     if (!state[PH::zoomd] && state[PH::rw_resizing] && (GetAsyncKeyState(VK_LBUTTON) & 0x8000))
@@ -451,9 +477,16 @@ YKM_APP_API YkmApp_Result ViewBox::LoopHandleEvts()
     }
     else { state.reset(PH::rw_moving); }
 
+
     // process window resize && move
     if (state[PH::d_size_pos])
     {
+        if(state[PH::d_content_size]){
+            ph.ca_size.x = size.x + ph.ca_content_size.x - content_size.x;
+            ph.ca_size.y = size.y + ph.ca_content_size.y - content_size.y;
+            state.reset(PH::d_content_size);
+        }
+
         if (size != ph.ca_size)
         {
             evts.push_evts(ViewBoxEvt::resize);
@@ -507,88 +540,92 @@ YKM_APP_API YkmApp_Result ViewBox::LoopHandleEvts()
     return YkmApp_R_Ok;
 }
 
-YKM_APP_API
-YkmApp_Result ViewBox::Show()
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_Show(YkmApp_ViewBox* vb)
 {
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
     if (!ph.hWnd) return YkmApp_R_Uninitialized;
     ph.state.set(PH::d_sleep);
     ph.state.reset(PH::ca_sleepd);
     return YkmApp_R_Ok;
 }
 
-YKM_APP_API
-YkmApp_Result ViewBox::Hide()
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_Hide(YkmApp_ViewBox* vb)
 {
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
     if (!ph.hWnd) return YkmApp_R_Uninitialized;
     ph.state.set(PH::d_sleep);
     ph.state.set(PH::ca_sleepd);
     return YkmApp_R_Ok;
 }
 
-YKM_APP_API
-YkmApp_Result ViewBox::SetTitle(const char* title)
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetTitle(YkmApp_ViewBox* vb, const char* title)
 {
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
     if (!ph.hWnd) return YkmApp_R_Uninitialized;
 
-    text_title = title;
+    vb->text_title = std::string(title);
     ph.state.set(PH::d_title);
     return YkmApp_R_Ok;
 }
 
-YKM_APP_API
-YkmApp_Result ViewBox::SetPos(int x, int y)
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetPos(YkmApp_ViewBox* vb, int width, int height)
 {
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
     if (!ph.hWnd) return YkmApp_R_Uninitialized;
-    ph.ca_pos = {x, y};
+
+    ph.ca_pos = {width, height};
     ph.state.set(PH::d_size_pos);
     return YkmApp_R_Ok;
 }
 
-YKM_APP_API
-YkmApp_Result ViewBox::SetSize(int x, int y)
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetSize(YkmApp_ViewBox* vb, int width, int height)
 {
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
     if (!ph.hWnd) return YkmApp_R_Uninitialized;
 
-    ph.ca_size = {x, y};
-
-    RECT rect;
-    GetClientRect(ph.hWnd, &rect);
-    ph.ca_content_size = {rect.right - rect.left, rect.bottom - rect.top};
-
-    ph.state.set(PH::d_size_pos);
-    return YkmApp_R_Ok;
-}
-
-YKM_APP_API
-YkmApp_Result ViewBox::SetContentSize(int x, int y)
-{
-    if (!ph.hWnd) return YkmApp_R_Uninitialized;
-
-    RECT r;
-    r.top = 0;
-    r.left = 0;
-    r.right = x;
-    r.bottom = y;
-
-    ph.ca_content_size = {x, y};
-
-    AdjustWindowRect(&r, ph.style, FALSE);
-
-    ph.ca_size = {r.right - r.left, r.bottom - r.top};
+    ph.ca_size = {width, height};
+    ph.ca_content_size = {width, height};
 
     ph.state.set(PH::d_size_pos);
     return YkmApp_R_Ok;
 }
 
-YKM_APP_API
-void ViewBox::Destory()
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetContentSize(YkmApp_ViewBox* vb, int width, int height)
 {
-    if (!ph.hWnd) return;
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
 
-    ::DestroyWindow(ph.hWnd);
-    ph.hWnd = nullptr;
+    ph.ca_size = {width, height};
+    ph.ca_content_size = {width, height};
+
+    ph.state.set(PH::d_content_size);
+    ph.state.set(PH::d_size_pos);
+    return YkmApp_R_Ok;
+}
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_GetWin32Ptrs(YkmApp_ViewBox* vb, void** hInst, void** hWnd)
+{
+    using PH = ViewBox::PH;
+    auto& ph = *(PH*)vb->ph;
+    if (!ph.hWnd) return YkmApp_R_Uninitialized;
+
+    if (hInst) *hInst = ph.hInst;
+    if (hWnd) *hWnd = ph.hWnd;
+
+    return YkmApp_R_Ok;
 }
 
 } // namespace ykm
-
-#endif

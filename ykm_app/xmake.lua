@@ -1,82 +1,52 @@
 add_requires("glfw")
 add_requires("fmt")
 
-option("ykm_viewbox_debug")
-    set_default(false)
-    set_showmenu(true)
-    add_defines("YKM_VIEWBOX_DEBUG")
+local AppOpt = {
+    Ex_Viewbox = "ykm_app_opt_viewbox",
+    Debug_Viewbox = "ykm_app_opt_viewbox_debug",
+}
 
-local function ykm_app_proj(basename,kind)
+
+option(AppOpt.Ex_Viewbox)
+set_default(false)
+set_showmenu(true)
+set_description("Enable viewbox module")
+add_defines("YKM_APP_OPT_VIEWBOX")
+
+option(AppOpt.Debug_Viewbox)
+set_default(false)
+set_showmenu(true)
+add_defines("YKM_VIEWBOX_DEBUG")
+
+-- ykm_app (Mother module)
+local function ykm_app(basename, kind)
     set_languages("c++17")
-    add_includedirs("./")
-    add_includedirs("./include",{public=true})
-    add_options("ykm_viewbox_debug")
     add_packages("fmt")
     set_basename(basename)
     set_kind(kind)
-end
+    add_options(AppOpt.Ex_Viewbox)
+    add_options(AppOpt.Debug_Viewbox)
 
-local function ykm_app_app()
-    add_files("app/app.cpp")
+    add_includedirs("./")
+    add_includedirs("./include", { public = true })
+    add_files("app/app.cpp", "app/sys.cpp", "app/input_map.cpp")
 
     if is_plat("windows") then
-        add_files("app/app_win32.cpp")
-        add_files("viewbox/vb_win32.cpp")
-        add_syslinks("user32")
+        add_files("app/app_win32.cpp", "app/sys_win32.cpp")
+        add_syslinks("user32", "gdi32")
     end
-end
 
-local function ykm_app_sys()
-    add_files("sys/sys.cpp")
-    add_files("sys/input_map.cpp")
-
-    if is_plat("windows") then
-        add_files("sys/sys_win32.cpp")
-        add_syslinks("user32","gdi32")
+    if has_config(AppOpt.Ex_Viewbox) then
+        if is_plat("windows") then
+            add_files("app/viewbox/vb_win32.cpp")
+        end
     end
 end
 
 target("ykm_app")
-    ykm_app_proj("ykm_app_static","static")
-
-    ykm_app_app()
-    ykm_app_sys()
+ykm_app("ykm_app_static", "static")
 
 target("ykm_app_dylib")
-    ykm_app_proj("ykm_app", "shared")
-
-    ykm_app_app()
-    add_defines("YKM_APP_SHARED_BUILD",{public=false})
-    add_defines("YKM_APP_SHARED_LIB",{public=true})
-
-    ykm_app_sys()
-    add_defines("YKM_SYS_SHARED_BUILD",{public=false})
-    add_defines("YKM_SYS_SHARED_LIB",{public=true})
-
-target("ykm_app_app")
-    ykm_app_proj("ykm_app_app_static", "static")
-
-    ykm_app_app()
-
-
-target("ykm_app_app_dylib")
-    ykm_app_proj("ykm_app_app", "shared")
-
-    ykm_app_app()
-    add_defines("YKM_APP_SHARED_BUILD",{public=false})
-    add_defines("YKM_APP_SHARED_LIB",{public=true})
-
-
-target("ykm_app_sys")
-    ykm_app_proj("ykm_app_sys_static", "static")
-    add_deps("ykm_app_app")
-
-    ykm_app_sys()
-
-target("ykm_app_sys_dylib")
-    ykm_app_proj("ykm_app_sys", "static")
-    add_deps("ykm_app_app_dylib")
-
-    ykm_app_sys()
-    add_defines("YKM_SYS_SHARED_BUILD",{public=false})
-    add_defines("YKM_SYS_SHARED_LIB",{public=true})
+ykm_app("ykm_app", "shared")
+add_defines("YKM_APP_SHARED_BUILD", { public = false })
+add_defines("YKM_APP_SHARED_LIB", { public = true })
