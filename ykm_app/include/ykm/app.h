@@ -1,5 +1,5 @@
-#ifndef YKM_APP_APP_H
-#define YKM_APP_APP_H
+#ifndef YKM_APP_H
+#define YKM_APP_H
 
 #include "base.h"
 
@@ -45,7 +45,7 @@ YkmApp_Result YkmApp_SetName(const char* name);
 
 YKM_APP_CAPI
 YkmApp_Result YkmApp_SetVersion( //
-    uint16_t big, uint16_t ver, uint32_t patch);
+    int big, int ver, int patch);
 
 YKM_APP_CAPI
 YkmApp_Result YkmApp_Quit();

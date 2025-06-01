@@ -4,8 +4,8 @@
 
 ykm::SysData ykm::sysData;
 
-YKM_SYS_CAPI
-void YkmSys_SetGPool(YkmApp_GPool gpool)
+YKM_APP_CAPI
+void YkmApp_SetGPool(YkmApp_GPool gpool)
 {
     if (gpool) { ykm::sysData.g = *((ykm::AppGlobal*)gpool); }
 };

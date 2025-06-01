@@ -6,13 +6,13 @@
 // clang-format off
 #ifdef YKM_VIEWBOX_DEBUG
 #define ykm_err(...) \
-    fmt::println("err: {}\n@{:>8}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__);
+    fmt::println("err: {}\n@{:>8}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 #define ykm_warn(...)\
-    fmt::println("warn: {}\n@{:>8}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__);
+    fmt::println("warn: {}\n@{:>8}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 #define ykm_log(...)\
-    fmt::println("log: {}", fmt::format(__VA_ARGS__));
+    fmt::println("log: {}", fmt::format(__VA_ARGS__))
 #else
 
 #define ykm_err(...)

@@ -3,14 +3,14 @@
 #include "ykm/utils/win.h"
 #include <vector>
 
-std::vector<YkmSys_ScreenInfo> screenInfos;
+std::vector<YkmApp_ScreenInfo> screenInfos;
 BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
     MONITORINFOEX mInfo;
     mInfo.cbSize = sizeof(MONITORINFOEX);
     if (GetMonitorInfo(hMonitor, &mInfo))
     {
-        YkmSys_ScreenInfo info;
+        YkmApp_ScreenInfo info;
 
         info.x = mInfo.rcMonitor.left;
         info.y = -mInfo.rcMonitor.right;
@@ -58,8 +58,8 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
     return TRUE;
 }
 
-YKM_SYS_CAPI
-YkmSys_ScreenInfo* YkmSys_GetScreenInfo(int* num)
+YKM_APP_CAPI
+YkmApp_ScreenInfo* YkmApp_GetScreenInfo(int* num)
 {
     screenInfos.clear();
     EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, 0);

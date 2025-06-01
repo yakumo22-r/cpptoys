@@ -18,6 +18,6 @@ struct SysData
 extern SysData sysData;
 } // namespace ykm
 
-inline void YkmSys_SetLastError(const char* str) { ::ykm::sysData.g.update_err(str); }
+inline void YkmApp_SetLastError(const char* str) { ::ykm::sysData.g.update_err(str); }
 
 #endif

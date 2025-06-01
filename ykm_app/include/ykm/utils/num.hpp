@@ -1,7 +1,6 @@
 #ifndef YKM_APP_UTILS_NUM_HPP
 #define YKM_APP_UTILS_NUM_HPP
 
-
 #include <cstdint>
 
 namespace ykm::app
@@ -10,8 +9,8 @@ namespace ykm::app
 template <typename T>
 struct num_xy final
 {
-    T x;
-    T y;
+    T x=0;
+    T y=0;
 
     bool operator==(num_xy r) const { return x == r.x && y == r.y; }
     bool operator!=(num_xy r) const { return x != r.x || y != r.y; }
@@ -36,9 +35,9 @@ using i64_xy = num_xy<int64_t>;
 template <typename T>
 struct num_xyz final
 {
-    T x;
-    T y;
-    T z;
+    T x=0;
+    T y=0;
+    T z=0;
 
     bool operator==(num_xyz r) const { return x == r.x && y == r.y && z == r.z; }
     bool operator!=(num_xyz r) const { return x != r.x || y != r.y || z != r.z; }

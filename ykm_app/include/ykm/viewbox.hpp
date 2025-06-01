@@ -17,9 +17,50 @@ todo: text input and candicate
 #include "viewbox/event.hpp"
 #include "utils/num.hpp"
 
+#include "ykm/app.h"
+#include "ykm/base.h"
 
-#include "app.hpp"
-YKM_APP_APP_HPP; // include cpp version
+struct YkmApp_ViewBox
+{
+    ykm::ViewBoxEvt evts;
+    ykm::app::i32_xy size;
+    ykm::app::i32_xy content_size;
+    ykm::app::i32_xy pos;
+    std::string text_title;
+    void* ph;
+};
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_Create(YkmApp_ViewBox* vb, int posX, int posY, int sizeX, int sizeY, const char* title);
+
+YKM_APP_CAPI
+void YkmApp_ViewBox_Destory(YkmApp_ViewBox* vb);
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_Show(YkmApp_ViewBox* vb);
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_Hide(YkmApp_ViewBox* vb);
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetTitle(YkmApp_ViewBox* vb, const char* title);
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetPos(YkmApp_ViewBox* vb, int width, int height);
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetSize(YkmApp_ViewBox* vb, int width, int height);
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_SetContentSize(YkmApp_ViewBox* vb, int width, int height);
+
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_LoopBegin(YkmApp_ViewBox* vb);
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_LoopHandleEvts(YkmApp_ViewBox* vb);
+
+
+#ifdef _WIN32
+YKM_APP_CAPI
+YkmApp_Result YkmApp_ViewBox_GetWin32Ptrs(YkmApp_ViewBox* vb, void** hInst, void** hWnd);
+#endif
 
 namespace ykm
 {
@@ -33,51 +74,51 @@ class ViewBox final
     friend implbase;
     struct PH;
 
-    YKM_APP_API ViewBox();
-    YKM_APP_API ~ViewBox();
+    ViewBox():vb() {vb.ph = nullptr;};
+    ~ViewBox() { YkmApp_ViewBox_Destory(&vb); }
 
     ViewBox(ViewBox&) = delete;
     ViewBox(ViewBox&&) = delete;
     auto operator=(ViewBox&) = delete;
     auto operator=(ViewBox&&) = delete;
 
-    YKM_APP_API YkmApp_Result Create //
-        (int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title);
+    YkmApp_Result Create(int32_t posX, int32_t posY, int32_t sizeX, int32_t sizeY, const char* title)
+    {
+        return YkmApp_ViewBox_Create(&vb, posX, posY, sizeX, sizeY, title);
+    }
 
-    YKM_APP_API void Destory();
+    void Destory() { YkmApp_ViewBox_Destory(&vb); }
 
-    YKM_APP_API YkmApp_Result Show();
-    YKM_APP_API YkmApp_Result Hide();
+    YkmApp_Result Show() { return YkmApp_ViewBox_Show(&vb); }
+    YkmApp_Result Hide() { return YkmApp_ViewBox_Hide(&vb); }
 
+    YkmApp_Result SetTitle(const char* title) { return YkmApp_ViewBox_SetTitle(&vb, title); }
+    YkmApp_Result SetPos(int width, int height) { return YkmApp_ViewBox_SetPos(&vb, width, height); }
+    YkmApp_Result SetSize(int width, int height) { return YkmApp_ViewBox_SetSize(&vb, width, height); }
+    YkmApp_Result SetContentSize(int width, int height) { return YkmApp_ViewBox_SetContentSize(&vb, width, height); }
 
-    YKM_APP_API YkmApp_Result SetTitle(const char* title);
-    YKM_APP_API YkmApp_Result SetPos(int width, int height);
-    YKM_APP_API YkmApp_Result SetSize(int width, int height);
-    YKM_APP_API YkmApp_Result SetContentSize(int width, int height);
+    YkmApp_Result LoopBegin() { return YkmApp_ViewBox_LoopBegin(&vb); }
+    YkmApp_Result LoopHandleEvts() { return YkmApp_ViewBox_LoopHandleEvts(&vb); }
 
-    YKM_APP_API YkmApp_Result LoopBegin();
-    YKM_APP_API YkmApp_Result LoopHandleEvts();
+#ifdef _WIN32
+    YkmApp_Result GetWin32Ptrs(void** hInst, void** hWnd) { return YkmApp_ViewBox_GetWin32Ptrs(&vb, hInst, hWnd); }
+#endif
 
     // set get
-    PH& GetPH() { return ph; }
+    PH& GetPH() { return *((PH*)vb.ph); }
 
-    i32_xy position() const { return pos; }
-    int32_t width() const { return size.x; }
-    int32_t height() const { return size.y; }
+    i32_xy position() const { return vb.pos; }
+    int32_t width() const { return vb.size.x; }
+    int32_t height() const { return vb.size.y; }
 
-    int32_t content_width() const { return content_size.x; }
-    int32_t content_height() const { return content_size.y; }
+    int32_t content_width() const { return vb.content_size.x; }
+    int32_t content_height() const { return vb.content_size.y; }
 
-    const std::string& title() const { return text_title; };
-    const ViewBoxEvt& event() const { return evts; }
+    const std::string& title() const { return vb.text_title; };
+    const ViewBoxEvt& event() const { return vb.evts; }
 
   private:
-    ViewBoxEvt evts;
-    i32_xy size;
-    i32_xy content_size;
-    i32_xy pos;
-    std::string text_title;
-    PH& ph;
+    YkmApp_ViewBox vb; // viewbox data
 
   public:
     struct implbase
@@ -89,7 +130,7 @@ class ViewBox final
         i32_xy& content_size() { return vb->content_size; }
         i32_xy& pos() { return vb->pos; }
         std::string& title() { return vb->text_title; }
-        ViewBox* vb;
+        YkmApp_ViewBox* vb;
     };
 };
 

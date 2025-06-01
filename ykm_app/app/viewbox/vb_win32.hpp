@@ -48,9 +48,9 @@ struct ViewBox::PH : ViewBox::implbase
         // clang-format off
         rw_resizing, rw_moving,
 
-        active, alive, zoomd,sleepd,ca_sleepd,
+        active, alive, zoomd, sleepd, ca_sleepd,
 
-        d_title, d_size_pos,d_sleep,
+        d_title, d_size_pos, d_sleep, d_content_size,
         // clang-format on
         state_num
     };

@@ -7,27 +7,15 @@
 #define YKM_APP_SYS_H
 
 #include "base.h"
+#include "app.h"
 
-#ifdef YKM_SYS_SHARED_LIB
-#if defined(YKM_SYS_SHARED_BUILD)
-#define YKM_SYS_API YKM_APP_EXPORT
-#else
-#define YKM_SYS_API YKM_APP_IMPORT
-#endif
-#else
-#define YKM_SYS_API
-#endif
-
-#define YKM_SYS_WRAP_C YKM_APP_WRAP_C
-#define YKM_SYS_CAPI YKM_SYS_WRAP_C YKM_SYS_API
-
-YKM_SYS_CAPI
-void YkmSys_SetGPool(YkmApp_GPool gpool);
+YKM_APP_CAPI
+void YkmApp_SetGPool(YkmApp_GPool gpool);
 
 //*****************************************//
 //********** base system api 1.0 **********//
 
-struct YkmSys_ScreenInfo
+struct YkmApp_ScreenInfo
 {
     int x;
     int y;
@@ -43,14 +31,14 @@ struct YkmSys_ScreenInfo
     int id;
 };
 
-YKM_SYS_CAPI
-YkmSys_ScreenInfo* YkmSys_GetScreenInfo(int* num);
+YKM_APP_CAPI
+YkmApp_ScreenInfo* YkmApp_GetScreenInfo(int* num);
 
 // TODO get system fonts resources
 typedef struct
 {
 
-} YkmSys_FontInfo;
+} YkmApp_FontInfo;
 
 // TODO get system device info -> cpu gpu memory disk
 
@@ -62,22 +50,22 @@ typedef struct
 //***************************//
 //********** input **********//
 
-typedef int (*YkmSys_InputCodeParser)(const void*, const char*);
-typedef const char* (*YkmSys_InputCodeMapper)(const void*, int);
+typedef int (*YkmApp_InputCodeParser)(const void*, const char*);
+typedef const char* (*YkmApp_InputCodeMapper)(const void*, int);
 
-struct YkmSys_InputMap
+struct YkmApp_InputMap
 {
     int mapId;
     const void* _ph;
-    YkmSys_InputCodeParser parser;
-    YkmSys_InputCodeMapper mapper;
+    YkmApp_InputCodeParser parser;
+    YkmApp_InputCodeMapper mapper;
 };
 
 #define YKM_SYS_Input_MapId_Keycode 0
 #define YKM_SYS_Input_MapId_MouseEvt 1
 
-YKM_SYS_CAPI
-YkmSys_InputMap YkmSys_GetInputMap(int mapId);
+YKM_APP_CAPI
+YkmApp_InputMap YkmApp_GetInputMap(int mapId);
 
 //********** input **********//
 //***************************//

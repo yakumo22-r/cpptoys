@@ -1,5 +1,5 @@
-#ifndef YKM_APP_APP_HPP
-#define YKM_APP_APP_HPP
+#ifndef YKM_APP_HPP
+#define YKM_APP_HPP
 
 #include "app.h"
 #include <functional>

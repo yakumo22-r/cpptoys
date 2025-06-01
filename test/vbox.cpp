@@ -3,10 +3,13 @@
 
 #include <fmt/format.h>
 
+#include <ykm/app.hpp>
 #include <ykm/viewbox.hpp>
 
 int main()
 {
+
+
     ykm::AppResultChecker check;
     check.error_handler = [](YkmApp_Result code, const char* error) { fmt::println("error {} -> {}", code, error); };
 
@@ -14,8 +17,8 @@ int main()
     {
         ykm::ViewBox vb;
         vb.Create(0, 0, 400, 400, "hello");
-        vb.SetContentSize(800, 600);
         vb.Show();
+        vb.SetContentSize(800, 600);
 
         fmt::println("start");
         int code = 0;
